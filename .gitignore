@@ -1,0 +1,6 @@
+node_modules/
+*.pdf
+.git/
+pasta com referencias de catalogo/
+public/
+*.log
