@@ -65,27 +65,35 @@ const SVG_ICONS = {
 
 // Polyfill para lucide.createIcons caso CDN esteja indisponível ou bloqueado por CSP
 window.createLucideIcons = function() {
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    window.lucide.createIcons();
-  }
-  document.querySelectorAll('i[data-lucide]').forEach(el => {
-    const iconName = el.getAttribute('data-lucide');
-    const classes = el.getAttribute('class') || '';
-    if (SVG_ICONS[iconName]) {
-      const svg = SVG_ICONS[iconName].replace('{CLASS}', classes);
-      el.outerHTML = svg;
+  try {
+    if (window.lucide && typeof window.lucide._nativeCreateIcons === 'function') {
+      window.lucide._nativeCreateIcons();
     }
-  });
+  } catch (e) {
+    console.warn("Lucide native error, falling back to SVG:", e);
+  }
+  try {
+    document.querySelectorAll('i[data-lucide]').forEach(el => {
+      const iconName = el.getAttribute('data-lucide');
+      const classes = el.getAttribute('class') || '';
+      if (SVG_ICONS && SVG_ICONS[iconName]) {
+        const svg = SVG_ICONS[iconName].replace('{CLASS}', classes);
+        el.outerHTML = svg;
+      }
+    });
+  } catch (e) {
+    console.warn("SVG icon fallback error:", e);
+  }
 };
 
-if (!window.lucide) {
-  window.lucide = { createIcons: window.createLucideIcons };
-} else {
-  const origCreate = window.lucide.createIcons;
-  window.lucide.createIcons = function() {
-    origCreate();
-    window.createLucideIcons();
+if (!window.lucide || typeof window.lucide.createIcons !== 'function') {
+  window.lucide = {
+    _isPolyfill: true,
+    createIcons: window.createLucideIcons
   };
+} else {
+  window.lucide._nativeCreateIcons = window.lucide.createIcons;
+  window.lucide.createIcons = window.createLucideIcons;
 }
 
 /**
