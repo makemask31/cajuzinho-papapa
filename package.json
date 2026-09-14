@@ -1,0 +1,16 @@
+{
+  "name": "cajuzinho-papapa",
+  "version": "1.0.0",
+  "description": "Sistema Web Completo de E-commerce e Gestao /adm para Cajuzinho Distribuidora Papapa",
+  "scripts": {
+    "start": "npx serve -l 3000 ."
+  },
+  "keywords": [
+    "papapa",
+    "cajuzinho",
+    "ecommerce",
+    "alimentacao-infantil"
+  ],
+  "author": "Cajuzinho Distribuidora",
+  "license": "ISC"
+}
