@@ -1296,6 +1296,8 @@ class AppState {
     if (p) {
       p.readyDelivery = !p.readyDelivery;
       this.saveState();
+    const _togProd = this.products.find(p => p.id === productId);
+    if (_togProd) upsertProductToDb(_togProd); // Supabase sync
       showToast(`${p.name} agora está: ${p.readyDelivery ? 'Pronta Entrega' : 'Sob Encomenda'}`, "success");
     }
   }
@@ -1477,6 +1479,8 @@ class AppState {
     if (prod) {
       prod.price = newPrice !== null && !isNaN(newPrice) && newPrice > 0 ? parseFloat(newPrice) : null;
       this.saveState();
+    const _updProd = this.products.find(p => p.id === productId);
+    if (_updProd) upsertProductToDb(_updProd); // Supabase sync
       showToast(`Preço de "${prod.name}" atualizado para ${prod.price ? formatMoney(prod.price) : 'Sob Consulta'}!`, "success");
     }
   }
@@ -1486,6 +1490,8 @@ class AppState {
     if (prod) {
       prod.stock = Math.max(0, parseInt(newStock) || 0);
       this.saveState();
+    const _stProd = this.products.find(p => p.id === productId);
+    if (_stProd) upsertProductToDb(_stProd); // Supabase sync
       showToast(`Estoque de "${prod.name}" atualizado para ${prod.stock} un.`, "success");
     }
   }
@@ -1574,6 +1580,7 @@ class AppState {
       status: "NOVO"
     };
     this.leads.unshift(newLead);
+    saveLeadToDb(newLead); // Supabase sync
     this.saveState();
     showToast("Solicitação de revenda enviada com sucesso! Entraremos em contato.", "success");
   }
@@ -1623,8 +1630,248 @@ class AppState {
   }
 }
 
+
+// ==========================================
+// 2. SUPABASE CLIENT E INTEGRAÇÃO COM BANCO
+// ==========================================
+const SUPABASE_URL = "https://qqxzlbjxgytixnjqfrhd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_NZt66ZHutgJPBwF1g50Ydg_ShGKO1K2";
+let sbClient = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('[Supabase] Client initialized');
+  } else {
+    console.warn('[Supabase] SDK not loaded — operating in localStorage-only mode');
+  }
+} catch (e) {
+  console.warn('[Supabase] Init error:', e);
+}
+
+/** Converte linha do banco (snake_case) → objeto produto JS (camelCase) */
+function dbRowToProduct(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    subcategory: row.subcategory || '',
+    age: row.age || '',
+    price: parseFloat(row.price) || 0,
+    costPrice: parseFloat(row.cost_price) || 0,
+    stock: parseInt(row.stock) || 0,
+    minStock: parseInt(row.min_stock) || 2,
+    readyDelivery: row.ready_delivery === true,
+    description: row.description || '',
+    image: row.image || '',
+    icon: row.icon || 'package',
+    tags: row.tags || [],
+    weight: row.weight || '',
+  };
+}
+
+/** Converte linha do banco → objeto kit JS */
+function dbRowToKit(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    price: parseFloat(row.price) || 0,
+    originalPrice: parseFloat(row.original_price) || 0,
+    items: row.items || [],
+    badge: row.badge || '',
+    icon: row.icon || 'package',
+    stock: parseInt(row.stock) || 0,
+  };
+}
+
+/** Converte linha do banco → objeto cupom JS */
+function dbRowToCoupon(row) {
+  return {
+    id: row.code, // tabela usa 'code' como chave primária
+    code: row.code,
+    type: row.type,
+    value: parseFloat(row.value) || 0,
+    minOrder: parseFloat(row.min_order_value) || 0,
+    maxUses: 0,
+    usedCount: 0,
+    expiresAt: null,
+    active: row.active !== false,
+    description: row.description || '',
+  };
+}
+
+/**
+ * Carrega produtos, kits, cupons e configurações do Supabase → appState.
+ * Fallback silencioso para localStorage caso o banco não esteja disponível.
+ */
+async function syncFromDatabase() {
+  if (!sbClient) {
+    console.warn('[Supabase] Skipping sync — no client');
+    return;
+  }
+  try {
+    console.log('[Supabase] Starting sync...');
+    const state = window.appState;
+
+    // Produtos
+    const { data: products, error: pErr } = await sbClient
+      .from('products').select('*').order('category').order('name');
+    if (pErr) throw pErr;
+    if (products && products.length > 0) {
+      state.products = products.map(dbRowToProduct);
+      console.log('[Supabase] Loaded', state.products.length, 'products');
+    }
+
+    // Kits
+    const { data: kits, error: kErr } = await sbClient
+      .from('kits').select('*').order('name');
+    if (kErr) throw kErr;
+    if (kits && kits.length > 0) {
+      state.kits = kits.map(dbRowToKit);
+      console.log('[Supabase] Loaded', state.kits.length, 'kits');
+    }
+
+    // Cupons
+    const { data: coupons, error: cErr } = await sbClient
+      .from('coupons').select('*');
+    if (cErr) throw cErr;
+    if (coupons && coupons.length > 0) {
+      state.coupons = coupons.map(dbRowToCoupon);
+      console.log('[Supabase] Loaded', state.coupons.length, 'coupons');
+    }
+
+    // Configurações (tabela store_settings: key / value como JSON)
+    const { data: settingsRows, error: sErr } = await sbClient
+      .from('store_settings').select('key, value');
+    if (sErr) throw sErr;
+    if (settingsRows && settingsRows.length > 0) {
+      settingsRows.forEach(({ key, value }) => {
+        // value pode ser objeto JSON (para key='general') ou string
+        if (key === 'general' && typeof value === 'object' && value !== null) {
+          Object.assign(state.settings, value);
+        } else if (key in state.settings) {
+          state.settings[key] = typeof state.settings[key] === 'number'
+            ? (parseFloat(value) || state.settings[key])
+            : value;
+        }
+      });
+      console.log('[Supabase] Loaded settings');
+    }
+
+    state.saveState();
+    state.notify();
+    console.log('[Supabase] Sync complete ✓');
+  } catch (err) {
+    console.warn('[Supabase] Sync failed (using localStorage fallback):', err.message || err);
+  }
+}
+
+/** Sincroniza um produto com o Supabase (fire-and-forget) */
+async function upsertProductToDb(product) {
+  if (!sbClient || !product) return;
+  try {
+    const { error } = await sbClient.from('products').upsert({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      subcategory: product.subcategory || '',
+      age: product.age || '',
+      price: product.price,
+      cost_price: product.costPrice || 0,
+      stock: product.stock,
+      min_stock: product.minStock || 2,
+      ready_delivery: product.readyDelivery === true,
+      description: product.description || '',
+      image: product.image || '',
+      icon: product.icon || 'package',
+      tags: product.tags || [],
+      weight: product.weight || '',
+    }, { onConflict: 'id' });
+    if (error) console.warn('[Supabase] upsertProduct error:', error.message);
+  } catch (e) {
+    console.warn('[Supabase] upsertProduct exception:', e.message);
+  }
+}
+
+/** Salva um pedido no Supabase (fire-and-forget) */
+async function saveOrderToDb(order) {
+  if (!sbClient || !order) return;
+  try {
+    const { error } = await sbClient.from('orders').insert({
+      id: order.id,
+      customer_name: order.customer || order.customerName || '',
+      customer_phone: order.phone || order.customerPhone || '',
+      customer_address: order.address || order.customerAddress || null,
+      delivery_type: order.deliveryType || 'Retirada',
+      payment_method: order.paymentMethod || 'PIX',
+      items: order.items || [],
+      subtotal: order.subtotal || 0,
+      shipping_fee: order.shipping || order.shippingFee || 0,
+      discount: order.discount || 0,
+      total: order.total || 0,
+      coupon_code: order.coupon || order.couponCode || null,
+      status: order.status || 'NOVO',
+      notes: order.notes || '',
+    });
+    if (error) console.warn('[Supabase] saveOrder error:', error.message);
+    else console.log('[Supabase] Order saved:', order.id);
+  } catch (e) {
+    console.warn('[Supabase] saveOrder exception:', e.message);
+  }
+}
+
+/** Salva um lead de revenda no Supabase (fire-and-forget) */
+async function saveLeadToDb(lead) {
+  if (!sbClient || !lead) return;
+  try {
+    const { error } = await sbClient.from('reseller_leads').insert({
+      id: lead.id,
+      name: lead.name || lead.contactName || '',
+      phone: lead.phone || lead.whatsapp || '',
+      city: lead.city || '',
+      business_type: lead.businessType || lead.type || '',
+      message: lead.message || lead.notes || '',
+      status: lead.status || 'NOVO',
+    });
+    if (error) console.warn('[Supabase] saveLead error:', error.message);
+    else console.log('[Supabase] Lead saved:', lead.id);
+  } catch (e) {
+    console.warn('[Supabase] saveLead exception:', e.message);
+  }
+}
+
+/** Salva todas as configurações no Supabase como JSON em store_settings (fire-and-forget) */
+async function saveSettingToDb(key, value) {
+  if (!sbClient) return;
+  // Ignora chamadas individuais — salva o bloco geral de configurações
+  // (chamada da handleSettingsSave passa múltiplas keys, aqui salvamos tudo de uma vez)
+}
+
+/** Salva o bloco completo de settings no Supabase (fire-and-forget) */
+async function saveAllSettingsToDb() {
+  if (!sbClient) return;
+  try {
+    const s = window.appState ? window.appState.settings : null;
+    if (!s) return;
+    const { error } = await sbClient.from('store_settings').upsert(
+      { key: 'general', value: s },
+      { onConflict: 'key' }
+    );
+    if (error) console.warn('[Supabase] saveAllSettings error:', error.message);
+    else console.log('[Supabase] Settings saved to store_settings');
+  } catch (e) {
+    console.warn('[Supabase] saveAllSettings exception:', e.message);
+  }
+}
+
+
 // Instância global do estado
 window.appState = new AppState();
+
+
+
+// Sync data from Supabase on startup (async, non-blocking)
+syncFromDatabase().catch(e => console.warn('[Supabase] startup sync error:', e));
 
 // ==========================================
 // 3. UTILITÁRIOS E HELPERS
@@ -3019,6 +3266,7 @@ function handleCheckoutSubmit(event) {
   };
 
   state.orders.unshift(newOrder);
+  saveOrderToDb(newOrder); // Supabase sync
 
   // Reduz estoque
   state.cart.forEach(item => {
@@ -4904,5 +5152,6 @@ function handleSettingsSave(event) {
   s.pixKey = form.pixKey.value;
 
   window.appState.saveState();
+  saveAllSettingsToDb(); // Supabase sync — salva todo o bloco de settings
   showToast("Configurações salvas com sucesso!", "success");
 }
