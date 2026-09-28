@@ -60,7 +60,10 @@ const SVG_ICONS = {
   "baby": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12a3 3 0 006 0M9 9h.01M15 9h.01"/></svg>`,
   "grid": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="7" height="7" stroke-width="2"/><rect x="14" y="3" width="7" height="7" stroke-width="2"/><rect x="14" y="14" width="7" height="7" stroke-width="2"/><rect x="3" y="14" width="7" height="7" stroke-width="2"/></svg>`,
   "send": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="22" y1="2" x2="11" y2="13" stroke-width="2"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke-width="2"/></svg>`,
-  "briefcase": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>`
+  "briefcase": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>`,
+  "copy": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`,
+  "credit-card": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="2"/><line x1="1" y1="10" x2="23" y2="10" stroke-width="2"/></svg>`,
+  "qr-code": `<svg class="{CLASS}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="7" height="7" stroke-width="2"/><rect x="14" y="3" width="7" height="7" stroke-width="2"/><rect x="3" y="14" width="7" height="7" stroke-width="2"/><rect x="14" y="14" width="3" height="3" stroke-width="2"/><rect x="18" y="18" width="3" height="3" stroke-width="2"/></svg>`
 };
 
 // Polyfill para lucide.createIcons caso CDN esteja indisponível ou bloqueado por CSP
@@ -106,848 +109,866 @@ if (!window.lucide || typeof window.lucide.createIcons !== 'function') {
 // ==========================================
 
 const INITIAL_PRODUCTS = [
-  // Papinhas de Fruta (+6 meses, Orgânicas 100g)
   {
-    id: "p_maca_ameixa",
-    name: "Papinha Orgânica Maçã e Ameixa 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: 6.24,
-    costPrice: 4.50,
-    stock: 48,
-    minStock: 15,
-    image: "images/products/papinha_maca_ameixa.jpg",
-    sku: "PAP-ORG-01",
-    ean: "7898994908722",
-    code: "17898994908729",
-    organic: true,
-    active: true,
-    featured: true,
-    salesCount: 42,
-    description: "100% fruta orgânica selecionada, sem adição de açúcar, corantes ou conservantes. Prático formato pouch que não precisa de refrigeração antes de abrir."
+    "id": "p_maca_ameixa",
+    "name": "Papinha Orgânica Maçã e Ameixa 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": 10.99,
+    "costPrice": 4.5,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/papinha_maca_ameixa.jpg",
+    "sku": "PAP-ORG-01",
+    "ean": "7898994908722",
+    "code": "17898994908729",
+    "organic": true,
+    "active": true,
+    "featured": true,
+    "salesCount": 42,
+    "description": "100% fruta orgânica selecionada, sem adição de açúcar, corantes ou conservantes. Prático formato pouch que não precisa de refrigeração antes de abrir.",
+    "readyDelivery": true
   },
   {
-    id: "p_banana_mirtilo_quinoa",
-    name: "Papinha Orgânica Banana, Mirtilo e Quinoa 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: 6.24,
-    costPrice: 4.50,
-    stock: 52,
-    minStock: 15,
-    image: "images/products/papinha_banana_mirtilo_quinoa.jpg",
-    sku: "PAP-ORG-02",
-    ean: "7898994908739",
-    code: "17898994908736",
-    organic: true,
-    active: true,
-    featured: true,
-    salesCount: 68,
-    description: "Combinação super nutritiva de banana, mirtilo e grãos ancestrais de quinoa orgânica. Sabor doce natural que os pequenos amam."
+    "id": "p_banana_mirtilo_quinoa",
+    "name": "Papinha Orgânica Banana, Mirtilo e Quinoa 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": 10.99,
+    "costPrice": 4.5,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/papinha_banana_mirtilo_quinoa.jpg",
+    "sku": "PAP-ORG-02",
+    "ean": "7898994908739",
+    "code": "17898994908736",
+    "organic": true,
+    "active": true,
+    "featured": true,
+    "salesCount": 68,
+    "description": "Combinação super nutritiva de banana, mirtilo e grãos ancestrais de quinoa orgânica. Sabor doce natural que os pequenos amam.",
+    "readyDelivery": true
   },
   {
-    id: "p_manga",
-    name: "Papinha Orgânica Manga 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: 6.24,
-    costPrice: 4.50,
-    stock: 36,
-    minStock: 15,
-    image: "images/products/papinha_manga.jpg",
-    sku: "PAP-ORG-03",
-    ean: "7898994908715",
-    code: "17898994908712",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 35,
-    description: "Pura manga brasileira orgânica cozida no ponto certo. Textura aveludada ideal para os primeiros momentos da introdução alimentar."
+    "id": "p_manga",
+    "name": "Papinha Orgânica Manga 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": 10.99,
+    "costPrice": 4.5,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/papinha_manga.jpg",
+    "sku": "PAP-ORG-03",
+    "ean": "7898994908715",
+    "code": "17898994908712",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 35,
+    "description": "Pura manga brasileira orgânica cozida no ponto certo. Textura aveludada ideal para os primeiros momentos da introdução alimentar.",
+    "readyDelivery": true
   },
   {
-    id: "p_morango_maca",
-    name: "Papinha Orgânica Morango e Maçã 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: null, // Editável no ADM
-    costPrice: null,
-    stock: 24,
-    minStock: 12,
-    image: "images/products/papinha_morango_maca.jpg",
-    sku: "PAP-ORG-04",
-    ean: "7898969895309",
-    code: "5306",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 14,
-    description: "Deliciosa combinação suave de morangos selecionados e maçãs frescas. Sem conservantes e sem adição de açúcares."
+    "id": "p_morango_maca",
+    "name": "Papinha Orgânica Morango e Maçã 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 12,
+    "image": "images/products/papinha_morango_maca.jpg",
+    "sku": "PAP-ORG-04",
+    "ean": "7898969895309",
+    "code": "5306",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 14,
+    "description": "Deliciosa combinação suave de morangos selecionados e maçãs frescas. Sem conservantes e sem adição de açúcares.",
+    "readyDelivery": false
   },
   {
-    id: "p_maca_cenoura_batatadoce",
-    name: "Papinha Orgânica Maçã, Cenoura e Batata-Doce 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: null, // Editável no ADM
-    costPrice: null,
-    stock: 20,
-    minStock: 10,
-    image: "images/products/papinha_maca_cenoura_batatadoce.jpg",
-    sku: "PAP-ORG-05",
-    ean: "7898994908746",
-    code: "27898994908757",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 18,
-    description: "Equilíbrio perfeito entre legumes doces e fruta da época. Aquece o paladar dos pequenos com vitaminas e fibras naturais."
+    "id": "p_maca_cenoura_batatadoce",
+    "name": "Papinha Orgânica Maçã, Cenoura e Batata-Doce 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/papinha_maca_cenoura_batatadoce.jpg",
+    "sku": "PAP-ORG-05",
+    "ean": "7898994908746",
+    "code": "27898994908757",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 18,
+    "description": "Equilíbrio perfeito entre legumes doces e fruta da época. Aquece o paladar dos pequenos com vitaminas e fibras naturais.",
+    "readyDelivery": false
   },
   {
-    id: "p_pera_espinafre_abobrinha",
-    name: "Papinha Orgânica Pera, Espinafre e Abobrinha 100g",
-    category: "Papinhas",
-    subcategory: "Papinhas de Fruta",
-    age: "+6m",
-    price: null, // Editável no ADM
-    costPrice: null,
-    stock: 18,
-    minStock: 10,
-    image: "images/products/papinha_pera_espinafre_abobrinha.jpg",
-    sku: "PAP-ORG-06",
-    ean: "7898994908753",
-    code: "17898994908750",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 12,
-    description: "Introdução consciente aos vegetais verdes combinados à suavidade refrescante da pera orgânica."
-  },
-
-  // Papinhas com Carne (+6 meses, 120g Pouch)
-  {
-    id: "p_carne_arroz_legumes",
-    name: "Papinha Carne, Arroz e Legumes 120g",
-    category: "Papinhas",
-    subcategory: "Papinhas Salgadas",
-    age: "+6m",
-    price: 8.90,
-    costPrice: 6.80,
-    stock: 40,
-    minStock: 15,
-    image: "images/products/papinha_carne_arroz_legumes.jpg",
-    sku: "PAP-CAR-01",
-    ean: "7898969895316",
-    code: "5313",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 54,
-    description: "Refeição completa pronta para consumo contendo os 4 principais grupos alimentares (proteínas, cereais, grãos e vegetais). Textura cremosa que estimula a mastigação."
+    "id": "p_pera_espinafre_abobrinha",
+    "name": "Papinha Orgânica Pera, Espinafre e Abobrinha 100g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas de Fruta",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/papinha_pera_espinafre_abobrinha.jpg",
+    "sku": "PAP-ORG-06",
+    "ean": "7898994908753",
+    "code": "17898994908750",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 12,
+    "description": "Introdução consciente aos vegetais verdes combinados à suavidade refrescante da pera orgânica.",
+    "readyDelivery": false
   },
   {
-    id: "p_frango_grao_vegetais",
-    name: "Papinha Frango, Grão-de-Bico e Vegetais 120g",
-    category: "Papinhas",
-    subcategory: "Papinhas Salgadas",
-    age: "+6m",
-    price: 8.90,
-    costPrice: 6.80,
-    stock: 42,
-    minStock: 15,
-    image: "images/products/papinha_frango_grao_vegetais.jpg",
-    sku: "PAP-CAR-02",
-    ean: "7898969895323",
-    code: "5320",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 58,
-    description: "Clean label completo: carne de frango de qualidade, grão-de-bico macio e vegetais frescos. Sem glúten, sem lactose e sem adição de sal."
-  },
-
-  // Yoguzinho (+12 meses, 100g)
-  {
-    id: "p_yoguzinho_amarelas",
-    name: "Yoguzinho Frutas Amarelas e Banana 100g",
-    category: "Papinhas",
-    subcategory: "Yoguzinho",
-    age: "+12m",
-    price: 6.24,
-    costPrice: 4.80,
-    stock: 32,
-    minStock: 12,
-    image: "images/products/yoguzinho_frutas_amarelas.png",
-    sku: "PAP-YOG-01",
-    ean: "7898969895569",
-    code: "5566",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 47,
-    description: "Inovação Papapá: iogurte pasteurizado com frutas amarelas e banana que dispensa geladeira antes de aberto! Apenas 6 ingredientes 100% naturais."
+    "id": "p_carne_arroz_legumes",
+    "name": "Papinha Carne, Arroz e Legumes 120g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas Salgadas",
+    "age": "+6m",
+    "price": 10.99,
+    "costPrice": 6.8,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/papinha_carne_arroz_legumes.jpg",
+    "sku": "PAP-CAR-01",
+    "ean": "7898969895316",
+    "code": "5313",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 54,
+    "description": "Refeição completa pronta para consumo contendo os 4 principais grupos alimentares (proteínas, cereais, grãos e vegetais). Textura cremosa que estimula a mastigação.",
+    "readyDelivery": true
   },
   {
-    id: "p_yoguzinho_vermelhas",
-    name: "Yoguzinho Frutas Vermelhas e Banana 100g",
-    category: "Papinhas",
-    subcategory: "Yoguzinho",
-    age: "+12m",
-    price: 6.24,
-    costPrice: 4.80,
-    stock: 35,
-    minStock: 12,
-    image: "images/products/yoguzinho_frutas_vermelhas.png",
-    sku: "PAP-YOG-02",
-    ean: "7898969895576",
-    code: "5573",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 49,
-    description: "Textura cremosa inconfundível com morangos, amoras e banana fresca. Sem corantes artificiais e sem adição de açúcar."
-  },
-
-  // Sopinhas em Bowl Fracionado (2x120g = 240g)
-  {
-    id: "p_sopinha_carne_mandioquinha",
-    name: "Sopinha Carne, Mandioquinha e Legumes 240g (2x120g)",
-    category: "Papinhas",
-    subcategory: "Sopinhas em Bowl",
-    age: "+6m",
-    price: null, // Editável no ADM
-    costPrice: null,
-    stock: 15,
-    minStock: 8,
-    image: "images/products/sopinha_carne_mandioquinha.jpg",
-    sku: "PAP-SOP-01",
-    ean: "7898969895620",
-    code: "5627",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 9,
-    description: "Embalagem fracionada moderna em 2 bowls de 120g BPA-free que vão direto ao micro-ondas. Praticidade absoluta para almoço e jantar."
+    "id": "p_frango_grao_vegetais",
+    "name": "Papinha Frango, Grão-de-Bico e Vegetais 120g",
+    "category": "Papinhas",
+    "subcategory": "Papinhas Salgadas",
+    "age": "+6m",
+    "price": 10.99,
+    "costPrice": 6.8,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/papinha_frango_grao_vegetais.jpg",
+    "sku": "PAP-CAR-02",
+    "ean": "7898969895323",
+    "code": "5320",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 58,
+    "description": "Clean label completo: carne de frango de qualidade, grão-de-bico macio e vegetais frescos. Sem glúten, sem lactose e sem adição de sal.",
+    "readyDelivery": true
   },
   {
-    id: "p_sopinha_feijao_carne",
-    name: "Sopinha Feijão, Carne e Legumes 240g (2x120g)",
-    category: "Papinhas",
-    subcategory: "Sopinhas em Bowl",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 14,
-    minStock: 8,
-    image: "images/products/sopinha_feijao_carne.jpg",
-    sku: "PAP-SOP-02",
-    ean: "7898969895606",
-    code: "5606",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 11,
-    description: "O sabor clássico da comidinha caseira brasileira em receita balanceada para bebês. Feijão caldoso, legumes e carne macia com pedacinhos suaves."
+    "id": "p_yoguzinho_amarelas",
+    "name": "Yoguzinho Frutas Amarelas e Banana 100g",
+    "category": "Papinhas",
+    "subcategory": "Yoguzinho",
+    "age": "+12m",
+    "price": 10.99,
+    "costPrice": 4.8,
+    "stock": 11,
+    "minStock": 12,
+    "image": "images/products/yoguzinho_frutas_amarelas.png",
+    "sku": "PAP-YOG-01",
+    "ean": "7898969895569",
+    "code": "5566",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 47,
+    "description": "Inovação Papapá: iogurte pasteurizado com frutas amarelas e banana que dispensa geladeira antes de aberto! Apenas 6 ingredientes 100% naturais.",
+    "readyDelivery": true
   },
   {
-    id: "p_sopinha_frango_arroz",
-    name: "Sopinha Frango, Arroz e Legumes 240g (2x120g)",
-    category: "Papinhas",
-    subcategory: "Sopinhas em Bowl",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 16,
-    minStock: 8,
-    image: "images/products/sopinha_frango_arroz.jpg",
-    sku: "PAP-SOP-03",
-    ean: "7898969895613",
-    code: "5610",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 10,
-    description: "Receita leve e altamente digestiva com frango desfiado fino, arroz e seleção de legumes da horta."
+    "id": "p_yoguzinho_vermelhas",
+    "name": "Yoguzinho Frutas Vermelhas e Banana 100g",
+    "category": "Papinhas",
+    "subcategory": "Yoguzinho",
+    "age": "+12m",
+    "price": 6.24,
+    "costPrice": 4.8,
+    "stock": 0,
+    "minStock": 12,
+    "image": "images/products/yoguzinho_frutas_vermelhas.png",
+    "sku": "PAP-YOG-02",
+    "ean": "7898969895576",
+    "code": "5573",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 49,
+    "description": "Textura cremosa inconfundível com morangos, amoras e banana fresca. Sem corantes artificiais e sem adição de açúcar.",
+    "readyDelivery": false
   },
   {
-    id: "p_sopinha_carne_macarrao",
-    name: "Sopinha Carne, Macarrão e Legumes 240g (2x120g)",
-    category: "Papinhas",
-    subcategory: "Sopinhas em Bowl",
-    age: "+12m",
-    price: null,
-    costPrice: null,
-    stock: 12,
-    minStock: 8,
-    image: "images/products/sopinha_carne_macarrao.jpg",
-    sku: "PAP-SOP-04",
-    ean: "7898969895637",
-    code: "5634",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 8,
-    description: "Perfeita para crianças a partir de 1 ano que já apreciam pedacinhos maiores e macarrãozinho macio com molho nutritivo."
-  },
-
-  // Linha La Chef (Potes de vidro 180g, Orgânicos)
-  {
-    id: "p_lachef_caseirinho",
-    name: "La Chef Caseirinho Arroz, Feijão, Carne e Legumes 180g",
-    category: "Papinhas",
-    subcategory: "La Chef",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 20,
-    minStock: 10,
-    image: "images/products/lachef_caseirinho_arroz_feijao.jpg",
-    sku: "PAP-CHEF-01",
-    ean: "7898969895255",
-    code: "5252",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 15,
-    description: "Desenvolvida pela chef Luana Wojciechowski: pote de vidro reutilizável com ingredientes 100% orgânicos e azeite de oliva extra virgem."
+    "id": "p_sopinha_carne_mandioquinha",
+    "name": "Sopinha Carne, Mandioquinha e Legumes 240g (2x120g)",
+    "category": "Papinhas",
+    "subcategory": "Sopinhas em Bowl",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/sopinha_carne_mandioquinha.jpg",
+    "sku": "PAP-SOP-01",
+    "ean": "7898969895620",
+    "code": "5627",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 9,
+    "description": "Embalagem fracionada moderna em 2 bowls de 120g BPA-free que vão direto ao micro-ondas. Praticidade absoluta para almoço e jantar.",
+    "readyDelivery": false
   },
   {
-    id: "p_lachef_risotinho",
-    name: "La Chef Risotinho Arroz, Quinoa, Frango e Legumes 180g",
-    category: "Papinhas",
-    subcategory: "La Chef",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 18,
-    minStock: 10,
-    image: "images/products/lachef_risotinho_arroz_quinoa.png",
-    sku: "PAP-CHEF-02",
-    ean: "7898969895262",
-    code: "5269",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 17,
-    description: "Experiência gastronômica para os bebês com textura cremosa de quinoa e frango temperado naturalmente com ervas frescas."
+    "id": "p_sopinha_feijao_carne",
+    "name": "Sopinha Feijão, Carne e Legumes 240g (2x120g)",
+    "category": "Papinhas",
+    "subcategory": "Sopinhas em Bowl",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/sopinha_feijao_carne.jpg",
+    "sku": "PAP-SOP-02",
+    "ean": "7898969895606",
+    "code": "5606",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 11,
+    "description": "O sabor clássico da comidinha caseira brasileira em receita balanceada para bebês. Feijão caldoso, legumes e carne macia com pedacinhos suaves.",
+    "readyDelivery": false
   },
   {
-    id: "p_lachef_sopinha_lentilha",
-    name: "La Chef Sopinha Lentilha, Carne e Legumes 180g",
-    category: "Papinhas",
-    subcategory: "La Chef",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 15,
-    minStock: 8,
-    image: "images/products/lachef_sopinha_lentilha.png",
-    sku: "PAP-CHEF-03",
-    ean: "7898969895279",
-    code: "5276",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 13,
-    description: "Rica em ferro e fibras da lentilha orgânica com carne macia e cenoura fresca cozida lentamente."
-  },
-
-  // Biscotti (+10 meses, 60g)
-  {
-    id: "p_biscotti_banana_cacau",
-    name: "Biscotti Banana e Cacau 60g",
-    category: "Snacks",
-    subcategory: "Biscotti",
-    age: "+10m",
-    price: 8.99,
-    costPrice: 6.90,
-    stock: 45,
-    minStock: 15,
-    image: "images/products/biscotti_banana_cacau.jpg",
-    sku: "PAP-BIS-01",
-    ean: "7898969895361",
-    code: "5368",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 62,
-    description: "Biscoito infantil anatômico adoçado apenas com o açúcar natural das frutas. Feito com cacau 100% puro e sem aromatizantes artificiais."
+    "id": "p_sopinha_frango_arroz",
+    "name": "Sopinha Frango, Arroz e Legumes 240g (2x120g)",
+    "category": "Papinhas",
+    "subcategory": "Sopinhas em Bowl",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/sopinha_frango_arroz.jpg",
+    "sku": "PAP-SOP-03",
+    "ean": "7898969895613",
+    "code": "5610",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 10,
+    "description": "Receita leve e altamente digestiva com frango desfiado fino, arroz e seleção de legumes da horta.",
+    "readyDelivery": false
   },
   {
-    id: "p_biscotti_goiaba",
-    name: "Biscotti com Goiaba 60g",
-    category: "Snacks",
-    subcategory: "Biscotti",
-    age: "+10m",
-    price: 8.99,
-    costPrice: 6.90,
-    stock: 38,
-    minStock: 15,
-    image: "images/products/biscotti_goiaba.jpg",
-    sku: "PAP-BIS-02",
-    ean: "7898969895590",
-    code: "5597",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 51,
-    description: "Adoçado naturalmente com polpa de goiaba brasileira. Textura macia que não machuca a boquinha e agrada inclusive aos pais."
+    "id": "p_sopinha_carne_macarrao",
+    "name": "Sopinha Carne, Macarrão e Legumes 240g (2x120g)",
+    "category": "Papinhas",
+    "subcategory": "Sopinhas em Bowl",
+    "age": "+12m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/sopinha_carne_macarrao.jpg",
+    "sku": "PAP-SOP-04",
+    "ean": "7898969895637",
+    "code": "5634",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 8,
+    "description": "Perfeita para crianças a partir de 1 ano que já apreciam pedacinhos maiores e macarrãozinho macio com molho nutritivo.",
+    "readyDelivery": false
   },
   {
-    id: "p_biscotti_laranja_cenoura",
-    name: "Biscotti Laranja e Cenoura 60g",
-    category: "Snacks",
-    subcategory: "Biscotti",
-    age: "+10m",
-    price: null,
-    costPrice: null,
-    stock: 22,
-    minStock: 10,
-    image: "images/products/biscotti_laranja_cenoura.jpg",
-    sku: "PAP-BIS-03",
-    ean: "7898969895378",
-    code: "5375",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 20,
-    description: "Toque cítrico suave da laranja natural associado à cenoura doce. Perfeito para o lanche da tarde ou na lancheira."
+    "id": "p_lachef_caseirinho",
+    "name": "La Chef Caseirinho Arroz, Feijão, Carne e Legumes 180g",
+    "category": "Papinhas",
+    "subcategory": "La Chef",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/lachef_caseirinho_arroz_feijao.jpg",
+    "sku": "PAP-CHEF-01",
+    "ean": "7898969895255",
+    "code": "5252",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 15,
+    "description": "Desenvolvida pela chef Luana Wojciechowski: pote de vidro reutilizável com ingredientes 100% orgânicos e azeite de oliva extra virgem.",
+    "readyDelivery": false
   },
   {
-    id: "p_biscotti_maca_canela",
-    name: "Biscotti Maçã e Canela 60g",
-    category: "Snacks",
-    subcategory: "Biscotti",
-    age: "+10m",
-    price: null,
-    costPrice: null,
-    stock: 25,
-    minStock: 10,
-    image: "images/products/biscotti_maca_canela.jpg",
-    sku: "PAP-BIS-04",
-    ean: "7898969895354",
-    code: "5351",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 22,
-    description: "Aroma e sabor aconchegante da clássica combinação de maçã desidratada com uma pitada sutil de canela pura."
+    "id": "p_lachef_risotinho",
+    "name": "La Chef Risotinho Arroz, Quinoa, Frango e Legumes 180g",
+    "category": "Papinhas",
+    "subcategory": "La Chef",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/lachef_risotinho_arroz_quinoa.png",
+    "sku": "PAP-CHEF-02",
+    "ean": "7898969895262",
+    "code": "5269",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 17,
+    "description": "Experiência gastronômica para os bebês com textura cremosa de quinoa e frango temperado naturalmente com ervas frescas.",
+    "readyDelivery": false
   },
   {
-    id: "p_biscotti_maracuja_camomila",
-    name: "Biscotti Maracujá e Camomila 60g",
-    category: "Snacks",
-    subcategory: "Biscotti",
-    age: "+10m",
-    price: null,
-    costPrice: null,
-    stock: 20,
-    minStock: 10,
-    image: "images/products/biscotti_maracuja_camomila.jpg",
-    sku: "PAP-BIS-05",
-    ean: "7898969895583",
-    code: "5580",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 16,
-    description: "Sabor relaxante e delicado com extrato botânico de camomila e maracujá doce. Excelente opção para o pré-soneca."
-  },
-
-  // Biscoitinho para Fase de Dentição (+7 meses, 36g)
-  {
-    id: "p_denticao_abobora_maca",
-    name: "Biscoitinho Dentição Abóbora e Maçã 36g (9 sachês)",
-    category: "Snacks",
-    subcategory: "Dentição",
-    age: "+7m",
-    price: null,
-    costPrice: null,
-    stock: 30,
-    minStock: 12,
-    image: "images/products/denticao_abobora_maca.jpg",
-    sku: "PAP-DEN-01",
-    ean: "7898994908777",
-    code: "8774",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 39,
-    description: "Projetado especialmente para aliviar a coceira na gengiva dos dentes nascendo. Textura que dissolve facilmente em contato com a saliva, sem risco de engasgo."
+    "id": "p_lachef_sopinha_lentilha",
+    "name": "La Chef Sopinha Lentilha, Carne e Legumes 180g",
+    "category": "Papinhas",
+    "subcategory": "La Chef",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/lachef_sopinha_lentilha.png",
+    "sku": "PAP-CHEF-03",
+    "ean": "7898969895279",
+    "code": "5276",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 13,
+    "description": "Rica em ferro e fibras da lentilha orgânica com carne macia e cenoura fresca cozida lentamente.",
+    "readyDelivery": false
   },
   {
-    id: "p_denticao_vegetais",
-    name: "Biscoitinho Dentição Vegetais 36g (9 sachês)",
-    category: "Snacks",
-    subcategory: "Dentição",
-    age: "+7m",
-    price: null,
-    costPrice: null,
-    stock: 32,
-    minStock: 12,
-    image: "images/products/denticao_vegetais.jpg",
-    sku: "PAP-DEN-02",
-    ean: "7898994908760",
-    code: "8767",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 31,
-    description: "Farinha de arroz e vegetais naturais em formato achatado que as mãozinhas conseguem segurar com autonomia e segurança."
-  },
-
-  // Palitinhos de Vegetais (+8 meses, 20g Orgânicos)
-  {
-    id: "p_palitinho_tomate_manjericao",
-    name: "Palitinhos Tomate e Manjericão Orgânico 20g",
-    category: "Snacks",
-    subcategory: "Palitinhos",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 30,
-    minStock: 12,
-    image: "images/products/palitinho_tomate_manjericao.jpg",
-    sku: "PAP-PAL-01",
-    ean: "7898969895064",
-    code: "5061",
-    organic: true,
-    active: true,
-    featured: true,
-    salesCount: 44,
-    description: "Grande vencedor do Prêmio Naturaltech Award 2024! Assado, aerado e crocante, à base de farinha de arroz, tomate e orégano/manjericão orgânico."
+    "id": "p_biscotti_banana_cacau",
+    "name": "Biscotti Banana e Cacau 60g",
+    "category": "Snacks",
+    "subcategory": "Biscotti",
+    "age": "+10m",
+    "price": 8.99,
+    "costPrice": 6.9,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/biscotti_banana_cacau.jpg",
+    "sku": "PAP-BIS-01",
+    "ean": "7898969895361",
+    "code": "5368",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 62,
+    "description": "Biscoito infantil anatômico adoçado apenas com o açúcar natural das frutas. Feito com cacau 100% puro e sem aromatizantes artificiais.",
+    "readyDelivery": true
   },
   {
-    id: "p_palitinho_cenoura_grao",
-    name: "Palitinhos Cenoura e Grão-de-Bico Orgânico 20g",
-    category: "Snacks",
-    subcategory: "Palitinhos",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 28,
-    minStock: 10,
-    image: "images/products/palitinho_cenoura_grao.jpg",
-    sku: "PAP-PAL-02",
-    ean: "7898969895071",
-    code: "5078",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 29,
-    description: "Fonte natural de proteínas vegetais e fibras. Snack assado sem adição de sal e livre de corantes artificiais."
+    "id": "p_biscotti_goiaba",
+    "name": "Biscotti com Goiaba 60g",
+    "category": "Snacks",
+    "subcategory": "Biscotti",
+    "age": "+10m",
+    "price": 8.99,
+    "costPrice": 6.9,
+    "stock": 11,
+    "minStock": 15,
+    "image": "images/products/biscotti_goiaba.jpg",
+    "sku": "PAP-BIS-02",
+    "ean": "7898969895590",
+    "code": "5597",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 51,
+    "description": "Adoçado naturalmente com polpa de goiaba brasileira. Textura macia que não machuca a boquinha e agrada inclusive aos pais.",
+    "readyDelivery": true
   },
   {
-    id: "p_palitinho_beterraba_grao",
-    name: "Palitinhos Beterraba e Grão-de-Bico Orgânico 20g",
-    category: "Snacks",
-    subcategory: "Palitinhos",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 25,
-    minStock: 10,
-    image: "images/products/palitinho_beterraba_grao.jpg",
-    sku: "PAP-PAL-03",
-    ean: "7898969895088",
-    code: "5085",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 23,
-    description: "Cor vibrante vinda diretamente da beterraba pura desidratada. Estimula a curiosidade visual e a alimentação saudável dos pequenos."
-  },
-
-  // Salgadinhos & Bebidas Papapá Era Uma Vez
-  {
-    id: "p_salgadinho_churrasco",
-    name: "Salgadinho Orgânico Churrasco Era Uma Vez 40g",
-    category: "Snacks",
-    subcategory: "Salgadinhos Era Uma Vez",
-    age: "+12m",
-    price: 7.65,
-    costPrice: 5.60,
-    stock: 24,
-    minStock: 10,
-    image: "images/products/era_uma_vez_line.png",
-    sku: "PAP-EUV-01",
-    ean: "7898969895673",
-    code: "5673",
-    organic: true,
-    active: true,
-    featured: true,
-    salesCount: 37,
-    description: "77% de ingredientes integrais orgânicos assados. O lanche irresistível para crianças maiores, com sabor churrasco natural sem conservantes químicos."
+    "id": "p_biscotti_laranja_cenoura",
+    "name": "Biscotti Laranja e Cenoura 60g",
+    "category": "Snacks",
+    "subcategory": "Biscotti",
+    "age": "+10m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/biscotti_laranja_cenoura.jpg",
+    "sku": "PAP-BIS-03",
+    "ean": "7898969895378",
+    "code": "5375",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 20,
+    "description": "Toque cítrico suave da laranja natural associado à cenoura doce. Perfeito para o lanche da tarde ou na lancheira.",
+    "readyDelivery": false
   },
   {
-    id: "p_salgadinho_queijo",
-    name: "Salgadinho Orgânico Queijo Era Uma Vez 40g",
-    category: "Snacks",
-    subcategory: "Salgadinhos Era Uma Vez",
-    age: "+12m",
-    price: 7.65,
-    costPrice: 5.60,
-    stock: 24,
-    minStock: 10,
-    image: "images/products/era_uma_vez_line.png",
-    sku: "PAP-EUV-02",
-    ean: "7898969895670",
-    code: "5670",
-    organic: true,
-    active: true,
-    featured: false,
-    salesCount: 33,
-    description: "Crocante e levinho com queijo natural ralado. Muito mais saudável que qualquer salgadinho industrializado convencional."
+    "id": "p_biscotti_maca_canela",
+    "name": "Biscotti Maçã e Canela 60g",
+    "category": "Snacks",
+    "subcategory": "Biscotti",
+    "age": "+10m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/biscotti_maca_canela.jpg",
+    "sku": "PAP-BIS-04",
+    "ean": "7898969895354",
+    "code": "5351",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 22,
+    "description": "Aroma e sabor aconchegante da clássica combinação de maçã desidratada com uma pitada sutil de canela pura.",
+    "readyDelivery": false
   },
   {
-    id: "p_bebida_morango",
-    name: "Bebida de Morango Papapá Era Uma Vez 200ml",
-    category: "Bebidas",
-    subcategory: "Bebidas Infantis",
-    age: "+12m",
-    price: 4.95,
-    costPrice: 3.50,
-    stock: 36,
-    minStock: 12,
-    image: "images/products/era_uma_vez_line.png",
-    sku: "PAP-BEB-01",
-    ean: "7898969895682",
-    code: "5682",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 46,
-    description: "Feito com suco natural de frutas e água de coco refrescante. Sem adição de açúcares ou corantes."
+    "id": "p_biscotti_maracuja_camomila",
+    "name": "Biscotti Maracujá e Camomila 60g",
+    "category": "Snacks",
+    "subcategory": "Biscotti",
+    "age": "+10m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/biscotti_maracuja_camomila.jpg",
+    "sku": "PAP-BIS-05",
+    "ean": "7898969895583",
+    "code": "5580",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 16,
+    "description": "Sabor relaxante e delicado com extrato botânico de camomila e maracujá doce. Excelente opção para o pré-soneca.",
+    "readyDelivery": false
   },
   {
-    id: "p_bebida_chocolate",
-    name: "Bebida Láctea de Chocolate Era Uma Vez 200ml",
-    category: "Bebidas",
-    subcategory: "Bebidas Lácteas",
-    age: "+12m",
-    price: 5.94,
-    costPrice: 4.20,
-    stock: 36,
-    minStock: 12,
-    image: "images/products/era_uma_vez_line.png",
-    sku: "PAP-BEB-02",
-    ean: "7898969895685",
-    code: "5685",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 52,
-    description: "Bebida láctea UHT feita com cacau de verdade e zero lactose. Deliciosa para a lancheira escolar com nutrição de confiança."
-  },
-
-  // Macarrão PapaPasta (+8 meses, 200g)
-  {
-    id: "p_papapasta_elbow",
-    name: "PapaPasta Mini Elbow com Quinoa 200g",
-    category: "Massas",
-    subcategory: "PapaPasta",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 22,
-    minStock: 10,
-    image: "images/products/papapasta_mini_elbow.jpg",
-    sku: "PAP-PAS-01",
-    ean: "7898969895290",
-    code: "5290",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 19,
-    description: "A primeira linha de macarrão feita para bebês no Brasil! Formato reduzido seguro, tempo de preparo de apenas 3 minutos com farinha enriquecida com quinoa."
+    "id": "p_denticao_abobora_maca",
+    "name": "Biscoitinho Dentição Abóbora e Maçã 36g (9 sachês)",
+    "category": "Snacks",
+    "subcategory": "Dentição",
+    "age": "+7m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 12,
+    "image": "images/products/denticao_abobora_maca.jpg",
+    "sku": "PAP-DEN-01",
+    "ean": "7898994908777",
+    "code": "8774",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 39,
+    "description": "Projetado especialmente para aliviar a coceira na gengiva dos dentes nascendo. Textura que dissolve facilmente em contato com a saliva, sem risco de engasgo.",
+    "readyDelivery": false
   },
   {
-    id: "p_papapasta_fusilli",
-    name: "PapaPasta Mini Fusilli Tricolori com Vegetais 200g",
-    category: "Massas",
-    subcategory: "PapaPasta",
-    age: "+8m",
-    price: null,
-    costPrice: null,
-    stock: 25,
-    minStock: 10,
-    image: "images/products/papapasta_mini_fusilli.jpg",
-    sku: "PAP-PAS-02",
-    ean: "7898969895283",
-    code: "5283",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 21,
-    description: "Colorido naturalmente com tomate e espinafre desidratados. Sem sal adicionado e testado rigorosamente para alimentação infantil."
-  },
-
-  // Mingaus e Cereais Infantis (+6 meses)
-  {
-    id: "p_cereal_multicereais_170g",
-    name: "Cereal Infantil Multicereais 170g (Sem Açúcar)",
-    category: "Cereais",
-    subcategory: "Mingaus & Cereais",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 28,
-    minStock: 10,
-    image: "images/products/cereal_multicereais_170g.jpg",
-    sku: "PAP-CER-01",
-    ean: "7898969895422",
-    code: "5429",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 34,
-    description: "Preparo instantâneo: 5 cereais nobres (arroz, milho, cevada, quinoa e aveia). Fonte de cálcio, magnésio e fósforo, ideal para mingau nutritivo."
+    "id": "p_denticao_vegetais",
+    "name": "Biscoitinho Dentição Vegetais 36g (9 sachês)",
+    "category": "Snacks",
+    "subcategory": "Dentição",
+    "age": "+7m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 12,
+    "image": "images/products/denticao_vegetais.jpg",
+    "sku": "PAP-DEN-02",
+    "ean": "7898994908760",
+    "code": "8767",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 31,
+    "description": "Farinha de arroz e vegetais naturais em formato achatado que as mãozinhas conseguem segurar com autonomia e segurança.",
+    "readyDelivery": false
   },
   {
-    id: "p_cereal_aveia_morango_170g",
-    name: "Cereal Infantil Aveia e Morango 170g (Sem Açúcar)",
-    category: "Cereais",
-    subcategory: "Mingaus & Cereais",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 26,
-    minStock: 10,
-    image: "images/products/cereal_aveia_morango_170g.jpg",
-    sku: "PAP-CER-02",
-    ean: "7898969895408",
-    code: "5402",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 28,
-    description: "91% de aveia integral com pedacinhos de morango de verdade. Textura macia que ajuda no desenvolvimento da deglutição."
+    "id": "p_palitinho_tomate_manjericao",
+    "name": "Palitinhos Tomate e Manjericão Orgânico 20g",
+    "category": "Snacks",
+    "subcategory": "Palitinhos",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 12,
+    "image": "images/products/palitinho_tomate_manjericao.jpg",
+    "sku": "PAP-PAL-01",
+    "ean": "7898969895064",
+    "code": "5061",
+    "organic": true,
+    "active": true,
+    "featured": true,
+    "salesCount": 44,
+    "description": "Grande vencedor do Prêmio Naturaltech Award 2024! Assado, aerado e crocante, à base de farinha de arroz, tomate e orégano/manjericão orgânico.",
+    "readyDelivery": false
   },
   {
-    id: "p_cereal_aveia_banana_ameixa_170g",
-    name: "Cereal Infantil Aveia, Banana e Ameixa 170g",
-    category: "Cereais",
-    subcategory: "Mingaus & Cereais",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 24,
-    minStock: 10,
-    image: "images/products/cereal_aveia_banana_ameixa_170g.jpg",
-    sku: "PAP-CER-03",
-    ean: "7898969895415",
-    code: "5419",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 25,
-    description: "Favorece o trânsito intestinal dos pequenos com aveia integral e ameixa selecionada. Sem açúcares refinados."
+    "id": "p_palitinho_cenoura_grao",
+    "name": "Palitinhos Cenoura e Grão-de-Bico Orgânico 20g",
+    "category": "Snacks",
+    "subcategory": "Palitinhos",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/palitinho_cenoura_grao.jpg",
+    "sku": "PAP-PAL-02",
+    "ean": "7898969895071",
+    "code": "5078",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 29,
+    "description": "Fonte natural de proteínas vegetais e fibras. Snack assado sem adição de sal e livre de corantes artificiais.",
+    "readyDelivery": false
   },
   {
-    id: "p_cereal_multicereais_500g",
-    name: "Cereal Infantil Multicereais Econômica 500g",
-    category: "Cereais",
-    subcategory: "Mingaus & Cereais",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 15,
-    minStock: 8,
-    image: "images/products/cereal_multicereais_500g.jpg",
-    sku: "PAP-CER-04",
-    ean: "7898969895392",
-    code: "5399",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 19,
-    description: "Versão econômica familiar de 500g para maior rendimento e praticidade no dia a dia da casa."
-  },
-
-  // Acessórios de Silicone (100% Silicone BPA Free)
-  {
-    id: "p_acessorio_babador",
-    name: "Babador de Silicone Infantil com Bolso Coletor",
-    category: "Acessórios",
-    subcategory: "Silicone",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 15,
-    minStock: 6,
-    image: "images/products/acessorio_babador.jpg",
-    sku: "PAP-ACE-01",
-    ean: "7898969895740",
-    code: "5740",
-    organic: false,
-    active: true,
-    featured: true,
-    salesCount: 30,
-    description: "Silicone macio com botões reguláveis e bolso profundo que apara restos de comida. Lavável em segundos ou na lava-louças."
+    "id": "p_palitinho_beterraba_grao",
+    "name": "Palitinhos Beterraba e Grão-de-Bico Orgânico 20g",
+    "category": "Snacks",
+    "subcategory": "Palitinhos",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/palitinho_beterraba_grao.jpg",
+    "sku": "PAP-PAL-03",
+    "ean": "7898969895088",
+    "code": "5085",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 23,
+    "description": "Cor vibrante vinda diretamente da beterraba pura desidratada. Estimula a curiosidade visual e a alimentação saudável dos pequenos.",
+    "readyDelivery": false
   },
   {
-    id: "p_acessorio_pratinho",
-    name: "Pratinho Infantil com Ventosa e 3 Divisórias",
-    category: "Acessórios",
-    subcategory: "Silicone",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 12,
-    minStock: 6,
-    image: "images/products/acessorio_pratinho.jpg",
-    sku: "PAP-ACE-02",
-    ean: "7898969895689",
-    code: "5689",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 22,
-    description: "Ventosa de alta sucção que fixa na mesa e evita quedas. Três divisórias ideais para estimular a autonomia do método BLW."
+    "id": "p_salgadinho_churrasco",
+    "name": "Salgadinho Orgânico Churrasco Era Uma Vez 40g",
+    "category": "Snacks",
+    "subcategory": "Salgadinhos Era Uma Vez",
+    "age": "+12m",
+    "price": 7.65,
+    "costPrice": 5.6,
+    "stock": 11,
+    "minStock": 10,
+    "image": "images/products/era_uma_vez_line.png",
+    "sku": "PAP-EUV-01",
+    "ean": "7898969895673",
+    "code": "5673",
+    "organic": true,
+    "active": true,
+    "featured": true,
+    "salesCount": 37,
+    "description": "77% de ingredientes integrais orgânicos assados. O lanche irresistível para crianças maiores, com sabor churrasco natural sem conservantes químicos.",
+    "readyDelivery": true
   },
   {
-    id: "p_acessorio_bowl",
-    name: "Bowl de Silicone com Ventosa Anti-Queda",
-    category: "Acessórios",
-    subcategory: "Silicone",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 16,
-    minStock: 6,
-    image: "images/products/acessorio_bowl.jpg",
-    sku: "PAP-ACE-03",
-    ean: "7898969895719",
-    code: "5719",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 26,
-    description: "Design arredondado perfeito para sopinhas e frutinhas raspadas. Pode ir ao micro-ondas e congelador com total segurança."
+    "id": "p_salgadinho_queijo",
+    "name": "Salgadinho Orgânico Queijo Era Uma Vez 40g",
+    "category": "Snacks",
+    "subcategory": "Salgadinhos Era Uma Vez",
+    "age": "+12m",
+    "price": 7.65,
+    "costPrice": 5.6,
+    "stock": 11,
+    "minStock": 10,
+    "image": "images/products/era_uma_vez_line.png",
+    "sku": "PAP-EUV-02",
+    "ean": "7898969895670",
+    "code": "5670",
+    "organic": true,
+    "active": true,
+    "featured": false,
+    "salesCount": 33,
+    "description": "Crocante e levinho com queijo natural ralado. Muito mais saudável que qualquer salgadinho industrializado convencional.",
+    "readyDelivery": true
   },
   {
-    id: "p_acessorio_kit_talheres",
-    name: "Kit Talheres de Treinamento Silicone & Bambu Macio",
-    category: "Acessórios",
-    subcategory: "Silicone",
-    age: "+6m",
-    price: null,
-    costPrice: null,
-    stock: 14,
-    minStock: 6,
-    image: "images/products/acessorio_kit_talheres.jpg",
-    sku: "PAP-ACE-04",
-    ean: "7898969895658",
-    code: "5658",
-    organic: false,
-    active: true,
-    featured: false,
-    salesCount: 27,
-    description: "Colher e garfinho ergonômicos com ponta de silicone suave que protege gengivas e dentes sensíveis."
+    "id": "p_bebida_morango",
+    "name": "Bebida de Morango Papapá Era Uma Vez 200ml",
+    "category": "Bebidas",
+    "subcategory": "Bebidas Infantis",
+    "age": "+12m",
+    "price": 4.95,
+    "costPrice": 3.5,
+    "stock": 11,
+    "minStock": 12,
+    "image": "images/products/era_uma_vez_line.png",
+    "sku": "PAP-BEB-01",
+    "ean": "7898969895682",
+    "code": "5682",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 46,
+    "description": "Feito com suco natural de frutas e água de coco refrescante. Sem adição de açúcares ou corantes.",
+    "readyDelivery": true
+  },
+  {
+    "id": "p_bebida_chocolate",
+    "name": "Bebida Láctea de Chocolate Era Uma Vez 200ml",
+    "category": "Bebidas",
+    "subcategory": "Bebidas Lácteas",
+    "age": "+12m",
+    "price": 5.94,
+    "costPrice": 4.2,
+    "stock": 11,
+    "minStock": 12,
+    "image": "images/products/era_uma_vez_line.png",
+    "sku": "PAP-BEB-02",
+    "ean": "7898969895685",
+    "code": "5685",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 52,
+    "description": "Bebida láctea UHT feita com cacau de verdade e zero lactose. Deliciosa para a lancheira escolar com nutrição de confiança.",
+    "readyDelivery": true
+  },
+  {
+    "id": "p_papapasta_elbow",
+    "name": "PapaPasta Mini Elbow com Quinoa 200g",
+    "category": "Massas",
+    "subcategory": "PapaPasta",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/papapasta_mini_elbow.jpg",
+    "sku": "PAP-PAS-01",
+    "ean": "7898969895290",
+    "code": "5290",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 19,
+    "description": "A primeira linha de macarrão feita para bebês no Brasil! Formato reduzido seguro, tempo de preparo de apenas 3 minutos com farinha enriquecida com quinoa.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_papapasta_fusilli",
+    "name": "PapaPasta Mini Fusilli Tricolori com Vegetais 200g",
+    "category": "Massas",
+    "subcategory": "PapaPasta",
+    "age": "+8m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/papapasta_mini_fusilli.jpg",
+    "sku": "PAP-PAS-02",
+    "ean": "7898969895283",
+    "code": "5283",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 21,
+    "description": "Colorido naturalmente com tomate e espinafre desidratados. Sem sal adicionado e testado rigorosamente para alimentação infantil.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_cereal_multicereais_170g",
+    "name": "Cereal Infantil Multicereais 170g (Sem Açúcar)",
+    "category": "Cereais",
+    "subcategory": "Mingaus & Cereais",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/cereal_multicereais_170g.jpg",
+    "sku": "PAP-CER-01",
+    "ean": "7898969895422",
+    "code": "5429",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 34,
+    "description": "Preparo instantâneo: 5 cereais nobres (arroz, milho, cevada, quinoa e aveia). Fonte de cálcio, magnésio e fósforo, ideal para mingau nutritivo.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_cereal_aveia_morango_170g",
+    "name": "Cereal Infantil Aveia e Morango 170g (Sem Açúcar)",
+    "category": "Cereais",
+    "subcategory": "Mingaus & Cereais",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/cereal_aveia_morango_170g.jpg",
+    "sku": "PAP-CER-02",
+    "ean": "7898969895408",
+    "code": "5402",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 28,
+    "description": "91% de aveia integral com pedacinhos de morango de verdade. Textura macia que ajuda no desenvolvimento da deglutição.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_cereal_aveia_banana_ameixa_170g",
+    "name": "Cereal Infantil Aveia, Banana e Ameixa 170g",
+    "category": "Cereais",
+    "subcategory": "Mingaus & Cereais",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 10,
+    "image": "images/products/cereal_aveia_banana_ameixa_170g.jpg",
+    "sku": "PAP-CER-03",
+    "ean": "7898969895415",
+    "code": "5419",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 25,
+    "description": "Favorece o trânsito intestinal dos pequenos com aveia integral e ameixa selecionada. Sem açúcares refinados.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_cereal_multicereais_500g",
+    "name": "Cereal Infantil Multicereais Econômica 500g",
+    "category": "Cereais",
+    "subcategory": "Mingaus & Cereais",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 8,
+    "image": "images/products/cereal_multicereais_500g.jpg",
+    "sku": "PAP-CER-04",
+    "ean": "7898969895392",
+    "code": "5399",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 19,
+    "description": "Versão econômica familiar de 500g para maior rendimento e praticidade no dia a dia da casa.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_acessorio_babador",
+    "name": "Babador de Silicone Infantil com Bolso Coletor",
+    "category": "Acessórios",
+    "subcategory": "Silicone",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 6,
+    "image": "images/products/acessorio_babador.jpg",
+    "sku": "PAP-ACE-01",
+    "ean": "7898969895740",
+    "code": "5740",
+    "organic": false,
+    "active": true,
+    "featured": true,
+    "salesCount": 30,
+    "description": "Silicone macio com botões reguláveis e bolso profundo que apara restos de comida. Lavável em segundos ou na lava-louças.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_acessorio_pratinho",
+    "name": "Pratinho Infantil com Ventosa e 3 Divisórias",
+    "category": "Acessórios",
+    "subcategory": "Silicone",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 6,
+    "image": "images/products/acessorio_pratinho.jpg",
+    "sku": "PAP-ACE-02",
+    "ean": "7898969895689",
+    "code": "5689",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 22,
+    "description": "Ventosa de alta sucção que fixa na mesa e evita quedas. Três divisórias ideais para estimular a autonomia do método BLW.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_acessorio_bowl",
+    "name": "Bowl de Silicone com Ventosa Anti-Queda",
+    "category": "Acessórios",
+    "subcategory": "Silicone",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 6,
+    "image": "images/products/acessorio_bowl.jpg",
+    "sku": "PAP-ACE-03",
+    "ean": "7898969895719",
+    "code": "5719",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 26,
+    "description": "Design arredondado perfeito para sopinhas e frutinhas raspadas. Pode ir ao micro-ondas e congelador com total segurança.",
+    "readyDelivery": false
+  },
+  {
+    "id": "p_acessorio_kit_talheres",
+    "name": "Kit Talheres de Treinamento Silicone & Bambu Macio",
+    "category": "Acessórios",
+    "subcategory": "Silicone",
+    "age": "+6m",
+    "price": null,
+    "costPrice": null,
+    "stock": 0,
+    "minStock": 6,
+    "image": "images/products/acessorio_kit_talheres.jpg",
+    "sku": "PAP-ACE-04",
+    "ean": "7898969895658",
+    "code": "5658",
+    "organic": false,
+    "active": true,
+    "featured": false,
+    "salesCount": 27,
+    "description": "Colher e garfinho ergonômicos com ponta de silicone suave que protege gengivas e dentes sensíveis.",
+    "readyDelivery": false
   }
 ];
 
@@ -1040,11 +1061,14 @@ const INITIAL_SETTINGS = {
   address: "Rua São Sebastião, 89 - Amparo/SP",
   deliveryFee: 7.90,
   freeDeliveryThreshold: 89.00,
-  pixKey: "55.942.933/0001-90",
-  // Credencial segura: hash SHA-256 de "Musica20@"
-  // Não expõe a senha em texto puro no código!
+  pixKey: "valinsrp@gmail.com",
+  pixEmail: "valinsrp@gmail.com",
+  pixPayload: "00020101021126400014BR.GOV.BCB.PIX0118valinsrp@gmail.com5204000053039865802BR5920flordemaracujaamparo6008SAOPAULO61080132305062070503***630411E6",
+  pixQrCodeImage: "images/pix_qrcode.jpg",
+  cardMachineNotice: "Pagamento com cartão na entrega (maquininha com motoboy). Taxa da operadora a consultar via WhatsApp.",
+  shippingCorreiosNotice: "Envios para outras cidades e estados via Correios (PAC/Sedex). Valor do frete sob consulta via WhatsApp.",
   adminEmail: "marcelavalin78@gmail.com",
-  adminPassHash: "921503cba2fc1a5cbb7507eb23668383f982d61996cf8f1174aa485743ea4101" // Calculado com algoritmo padrão
+  adminPassHash: "921503cba2fc1a5cbb7507eb23668383f982d61996cf8f1174aa485743ea4101"
 };
 
 const INITIAL_ORDERS = [
@@ -1224,6 +1248,9 @@ class AppState {
     this.selectedProductModal = null;
     this.isCartDrawerOpen = false;
     this.isCheckoutModalOpen = false;
+    this.selectedPaymentMethod = "pix";
+    this.pixPaymentModalOrder = null;
+    this.cardPaymentModalOrder = null;
     this.isAdminAuthenticated = sessionStorage.getItem("cajuzinho_adm_auth") === "true";
     this.adminCurrentTab = "dashboard";
     this.adminSearch = "";
@@ -1232,14 +1259,45 @@ class AppState {
   }
 
   loadState() {
-    this.products = JSON.parse(localStorage.getItem("cajuzinho_products")) || INITIAL_PRODUCTS;
+    const CURRENT_SCHEMA = "2.3";
+    const savedVersion = localStorage.getItem("cajuzinho_schema_version");
+    let storedProducts = JSON.parse(localStorage.getItem("cajuzinho_products"));
+    let storedSettings = JSON.parse(localStorage.getItem("cajuzinho_settings"));
+
+    // Migração de versão: sincroniza os 12 itens pronta entrega e configurações de pagamento Pix
+    if (!storedProducts || savedVersion !== CURRENT_SCHEMA) {
+      this.products = INITIAL_PRODUCTS;
+      this.settings = Object.assign({}, INITIAL_SETTINGS, storedSettings || {}, {
+        pixKey: INITIAL_SETTINGS.pixKey,
+        pixEmail: INITIAL_SETTINGS.pixEmail,
+        pixPayload: INITIAL_SETTINGS.pixPayload,
+        pixQrCodeImage: INITIAL_SETTINGS.pixQrCodeImage,
+        cardMachineNotice: INITIAL_SETTINGS.cardMachineNotice,
+        shippingCorreiosNotice: INITIAL_SETTINGS.shippingCorreiosNotice
+      });
+      localStorage.setItem("cajuzinho_products", JSON.stringify(this.products));
+      localStorage.setItem("cajuzinho_settings", JSON.stringify(this.settings));
+      localStorage.setItem("cajuzinho_schema_version", CURRENT_SCHEMA);
+    } else {
+      this.products = storedProducts;
+      this.settings = storedSettings || INITIAL_SETTINGS;
+    }
+
     this.kits = JSON.parse(localStorage.getItem("cajuzinho_kits")) || INITIAL_KITS;
     this.coupons = JSON.parse(localStorage.getItem("cajuzinho_coupons")) || INITIAL_COUPONS;
-    this.settings = JSON.parse(localStorage.getItem("cajuzinho_settings")) || INITIAL_SETTINGS;
     this.orders = JSON.parse(localStorage.getItem("cajuzinho_orders")) || INITIAL_ORDERS;
     this.losses = JSON.parse(localStorage.getItem("cajuzinho_losses")) || INITIAL_LOSSES;
     this.leads = JSON.parse(localStorage.getItem("cajuzinho_leads")) || INITIAL_RESELLER_LEADS;
     this.suggestions = JSON.parse(localStorage.getItem("cajuzinho_suggestions")) || INITIAL_SUGGESTIONS;
+  }
+
+  toggleProductReadyDelivery(productId) {
+    const p = this.products.find(prod => prod.id === productId);
+    if (p) {
+      p.readyDelivery = !p.readyDelivery;
+      this.saveState();
+      showToast(`${p.name} agora está: ${p.readyDelivery ? 'Pronta Entrega' : 'Sob Encomenda'}`, "success");
+    }
   }
 
   saveState() {
@@ -1288,8 +1346,12 @@ class AppState {
         showToast("Este produto está com preço sob consulta no momento.", "warning");
         return;
       }
+      if (!product.readyDelivery) {
+        showToast("Este item está disponível sob encomenda. Fale conosco no WhatsApp!", "info");
+        return;
+      }
       if (product.stock < quantity) {
-        showToast(`Desculpe, temos apenas ${product.stock} unidades em estoque.`, "warning");
+        showToast(`Desculpe, temos apenas ${product.stock} unidades a pronta entrega.`, "warning");
         return;
       }
       itemTitle = product.name;
@@ -1354,7 +1416,7 @@ class AppState {
   }
 
   getShippingFee(deliveryType = "Entrega") {
-    if (deliveryType === "Retirada") return 0;
+    if (deliveryType === "Retirada" || deliveryType === "Correios") return 0;
     const subtotal = this.getCartSubtotal();
     if (subtotal >= this.settings.freeDeliveryThreshold) return 0;
     return this.settings.deliveryFee;
@@ -1762,6 +1824,12 @@ function renderStoreView(state) {
 
     <!-- MODAL DE CHECKOUT -->
     ${state.isCheckoutModalOpen ? renderCheckoutModal(state) : ''}
+
+    <!-- MODAL DE PAGAMENTO PIX -->
+    ${state.pixPaymentModalOrder ? renderPixPaymentModal(state) : ''}
+
+    <!-- MODAL DE CONFIRMAÇÃO CARTÃO NA ENTREGA -->
+    ${state.cardPaymentModalOrder ? renderCardPaymentModal(state) : ''}
   `;
 }
 
@@ -2165,20 +2233,32 @@ function getCategoryIcon(category) {
 function renderProductCard(product, state) {
   const isAvailable = product.price !== null;
   const inStock = product.stock > 0;
+  const isReady = !!product.readyDelivery;
 
   return `
     <div class="glass-card rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm glass-card-hover border border-slate-200/80 flex flex-col justify-between bg-white relative group">
       
       <!-- BADGES SUPERIORES -->
-      <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+      <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10 gap-1.5">
         <span class="px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold">
           ${product.age}
         </span>
-        ${product.organic ? `
-          <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
-            <i data-lucide="leaf" class="w-2.5 h-2.5"></i> Orgânico
-          </span>
-        ` : ''}
+        <div class="flex items-center gap-1">
+          ${isReady ? `
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
+              <i data-lucide="zap" class="w-2.5 h-2.5"></i> Pronta Entrega
+            </span>
+          ` : `
+            <span class="px-2 py-0.5 rounded-full bg-slate-800/85 backdrop-blur-sm text-amber-300 text-[10px] font-bold flex items-center gap-1 shadow-sm border border-amber-400/20">
+              <i data-lucide="clock" class="w-2.5 h-2.5 text-amber-400"></i> Sob Encomenda
+            </span>
+          `}
+          ${product.organic ? `
+            <span class="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-bold items-center gap-1 shadow-sm hidden sm:inline-flex">
+              <i data-lucide="leaf" class="w-2.5 h-2.5"></i> Orgânico
+            </span>
+          ` : ''}
+        </div>
       </div>
 
       <!-- IMAGEM REAL DO PRODUTO (CLICÁVEL PARA MODAL) -->
@@ -2202,18 +2282,25 @@ function renderProductCard(product, state) {
           `}
         </div>
 
-        ${isAvailable && inStock ? `
+        ${isReady && isAvailable && inStock ? `
           <button 
             onclick="window.appState.addToCart('${product.id}', 1)"
             class="p-2 sm:px-3 sm:py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm shadow-brand-500/20 transition-all flex items-center gap-1.5 active:scale-95">
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span class="hidden sm:inline">Adicionar</span>
           </button>
+        ` : isReady && !inStock ? `
+          <button 
+            onclick="openProductModal('${product.id}')"
+            class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-semibold">
+            Esgotado
+          </button>
         ` : `
           <button 
             onclick="openProductModal('${product.id}')"
-            class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold">
-            Detalhes
+            class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[11px] font-bold transition-all flex items-center gap-1">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
+            <span>Sob Encomenda</span>
           </button>
         `}
       </div>
@@ -2584,24 +2671,41 @@ function renderProductModal(state) {
                 </span>
               </div>
 
-              ${isAvailable && prod.stock > 0 ? `
-                <div class="flex items-center gap-3">
-                  <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
-                    <button onclick="decrementModalQty()" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100">-</button>
-                    <span id="modal-qty" class="w-10 text-center font-bold text-sm">1</span>
-                    <button onclick="incrementModalQty(${prod.stock})" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100">+</button>
-                  </div>
+              ${prod.readyDelivery && isAvailable && prod.stock > 0 ? `
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
+                      <button onclick="decrementModalQty()" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100">-</button>
+                      <span id="modal-qty" class="w-10 text-center font-bold text-sm">1</span>
+                      <button onclick="incrementModalQty(${prod.stock})" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100">+</button>
+                    </div>
 
-                  <button 
-                    onclick="addModalProductToCart('${prod.id}')"
-                    class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 active:scale-95">
-                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                    <span>Adicionar ao Carrinho</span>
-                  </button>
+                    <button 
+                      onclick="addModalProductToCart('${prod.id}')"
+                      class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 active:scale-95">
+                      <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                      <span>Adicionar ao Carrinho</span>
+                    </button>
+                  </div>
+                  <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg flex items-center gap-1.5 border border-emerald-200">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i> Produto a pronta entrega imediata (11 unidades)!
+                  </span>
                 </div>
               ` : `
-                <div class="p-3 rounded-xl bg-amber-50 text-amber-800 text-xs font-medium border border-amber-200">
-                  Preço ou estoque sob consulta. Você pode definir o valor deste item diretamente no painel <strong>/adm</strong>.
+                <div class="space-y-3">
+                  <div class="p-3 rounded-2xl bg-amber-50 text-amber-900 text-xs font-medium border border-amber-200/80">
+                    <strong class="block mb-1 text-amber-950 font-bold flex items-center gap-1.5">
+                      <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i> Disponível Sob Encomenda:
+                    </strong>
+                    Este item não está na pronta entrega rápida, mas você pode encomendar diretamente conosco pelo WhatsApp com fornecimento direto Papapá!
+                  </div>
+                  <a 
+                    href="https://wa.me/5519981189816?text=${encodeURIComponent('Olá Cajuzinho! Gostaria de encomendar o produto: ' + prod.name + ' (Código: ' + (prod.code || prod.sku) + ')')}" 
+                    target="_blank"
+                    class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    <span>Encomendar pelo WhatsApp (19 98118-9816)</span>
+                  </a>
                 </div>
               `}
             </div>
@@ -2796,9 +2900,79 @@ function renderCartDrawer(state) {
 }
 
 let checkoutDeliveryType = "Entrega";
+let checkoutPaymentMethod = "pix";
+
 function setCheckoutDeliveryType(type) {
   checkoutDeliveryType = type;
   window.appState.notify();
+}
+
+function setCheckoutPaymentMethod(method) {
+  checkoutPaymentMethod = method;
+  window.appState.notify();
+}
+
+function closePixPaymentModal() {
+  window.appState.pixPaymentModalOrder = null;
+  window.appState.notify();
+}
+
+function closeCardPaymentModal() {
+  window.appState.cardPaymentModalOrder = null;
+  window.appState.notify();
+}
+
+function copyPixCode() {
+  const input = document.getElementById("pix-copy-input");
+  const code = input ? input.value : (window.appState.settings.pixPayload || "");
+  copyToClipboard(code, "Código Pix Copia e Cola copiado com sucesso!");
+  const btnText = document.getElementById("btn-copy-text");
+  if (btnText) {
+    btnText.innerText = "Copiado! ✓";
+    setTimeout(() => {
+      const el = document.getElementById("btn-copy-text");
+      if (el) el.innerText = "Copiar";
+    }, 3000);
+  }
+}
+
+function copyPixEmail() {
+  const email = window.appState.settings.pixEmail || "valinsrp@gmail.com";
+  copyToClipboard(email, "Chave Pix (E-mail) copiada com sucesso!");
+}
+
+function copyToClipboard(text, successMsg) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(successMsg, "success");
+    }).catch(() => {
+      fallbackCopy(text, successMsg);
+    });
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg) {
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    if (successful) {
+      showToast(successMsg, "success");
+    } else {
+      showToast("Por favor, selecione e copie o código manualmente.", "warning");
+    }
+  } catch (err) {
+    showToast("Por favor, selecione e copie o código manualmente.", "warning");
+  }
 }
 
 function handleCheckoutSubmit(event) {
@@ -2806,12 +2980,18 @@ function handleCheckoutSubmit(event) {
   const form = event.target;
   const state = window.appState;
 
-  const customerName = form.customerName.value;
-  const customerPhone = form.customerPhone.value;
-  const customerEmail = form.customerEmail.value;
-  const address = checkoutDeliveryType === "Entrega" 
-    ? `${form.addressStreet.value}, ${form.addressNumber.value} ${form.addressComplement.value || ''} - ${form.addressCity.value}/${form.addressState.value}`
-    : "Retirada no ponto de atendimento Cajuzinho (Amparo/SP)";
+  const customerName = (form.customerName.value || "").trim();
+  const customerPhone = (form.customerPhone.value || "").trim();
+  const customerEmail = (form.customerEmail ? form.customerEmail.value : "").trim();
+  
+  let address = "";
+  if (checkoutDeliveryType === "Entrega") {
+    address = `${form.addressStreet.value.trim()}, ${form.addressNumber.value.trim()} ${form.addressComplement ? form.addressComplement.value.trim() : ''} - ${form.addressCity.value.trim()}/${form.addressState.value}`;
+  } else if (checkoutDeliveryType === "Correios") {
+    address = `Envio Correios: ${form.addressStreet.value.trim()}, ${form.addressNumber.value.trim()} ${form.addressComplement ? form.addressComplement.value.trim() : ''} - CEP: ${form.addressZip ? form.addressZip.value.trim() : ''} - ${form.addressCity.value.trim()}/${form.addressState.value}`;
+  } else {
+    address = "Retirada no ponto de atendimento Cajuzinho (Rua São Sebastião, 89 - Amparo/SP)";
+  }
 
   const subtotal = state.getCartSubtotal();
   const discount = state.getCartDiscount();
@@ -2819,13 +2999,14 @@ function handleCheckoutSubmit(event) {
   const total = state.getCartTotal(checkoutDeliveryType);
   const orderId = "CJZ-" + Math.floor(1000 + Math.random() * 9000);
 
-  // Registra novo pedido no estado do sistema
   const newOrder = {
     id: orderId,
     date: new Date().toISOString().replace("T", " ").substring(0, 16),
     customer: customerName,
     phone: customerPhone,
-    city: checkoutDeliveryType === "Entrega" ? form.addressCity.value : "Amparo",
+    email: customerEmail,
+    city: (checkoutDeliveryType !== "Retirada" && form.addressCity) ? form.addressCity.value.trim() : "Amparo",
+    address: address,
     items: state.cart.map(c => ({ id: c.id, name: c.name, qty: c.qty, price: c.price })),
     subtotal: subtotal,
     discount: discount,
@@ -2833,12 +3014,13 @@ function handleCheckoutSubmit(event) {
     shipping: shipping,
     total: total,
     deliveryType: checkoutDeliveryType,
+    paymentMethod: checkoutPaymentMethod === "pix" ? "PIX" : "CARTÃO NA ENTREGA",
     status: "NOVO"
   };
 
   state.orders.unshift(newOrder);
 
-  // Reduz estoque automaticamente
+  // Reduz estoque
   state.cart.forEach(item => {
     if (!item.isKit) {
       const p = state.products.find(prod => prod.id === item.id);
@@ -2846,40 +3028,21 @@ function handleCheckoutSubmit(event) {
     }
   });
 
-  state.saveState();
-
-  // Gera texto para o WhatsApp
-  let itemsText = "";
-  state.cart.forEach(item => {
-    itemsText += `• ${item.qty}x ${item.name} (${formatMoney(item.price * item.qty)})\n`;
-  });
-
-  const whatsappMessage = 
-`*NOVO PEDIDO CAJUZINHO — #${orderId}*
-
-*Cliente:* ${customerName}
-*WhatsApp:* ${customerPhone}
-*Modalidade:* ${checkoutDeliveryType}
-*Endereço:* ${address}
-
-*Itens do Pedido:*
-${itemsText}
-*Subtotal:* ${formatMoney(subtotal)}
-${discount > 0 ? `*Cupom:* ${state.appliedCoupon.code} (-${formatMoney(discount)})\n` : ''}*Frete:* ${shipping === 0 ? 'Grátis' : formatMoney(shipping)}
-*TOTAL A PAGAR:* ${formatMoney(total)}
-
-_Pedido gerado automaticamente pelo sistema da Cajuzinho._`;
-
-  const encodedMsg = encodeURIComponent(whatsappMessage);
-  const wpUrl = `https://wa.me/${state.settings.whatsappNumber}?text=${encodedMsg}`;
-
-  // Limpa o carrinho
+  // Limpa o carrinho e fecha o modal de dados
   state.clearCart();
   toggleCheckoutModal(false);
 
-  // Abre WhatsApp em nova aba
-  window.open(wpUrl, "_blank");
-  showToast(`Pedido #${orderId} gerado com sucesso! Redirecionando para o WhatsApp...`, "success");
+  // Abre o modal de pagamento respectivo
+  if (checkoutPaymentMethod === "pix") {
+    state.pixPaymentModalOrder = newOrder;
+    state.cardPaymentModalOrder = null;
+  } else {
+    state.cardPaymentModalOrder = newOrder;
+    state.pixPaymentModalOrder = null;
+  }
+
+  state.saveState();
+  state.notify();
 }
 
 function renderCheckoutModal(state) {
@@ -2893,7 +3056,7 @@ function renderCheckoutModal(state) {
       <div class="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 overflow-hidden" onclick="event.stopPropagation()">
         
         <!-- CABEÇALHO -->
-        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+        <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
           <div>
             <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block">Finalização Segura</span>
             <h3 class="text-xl font-black text-slate-900 font-heading">Concluir Pedido Cajuzinho</h3>
@@ -2905,32 +3068,52 @@ function renderCheckoutModal(state) {
 
         <form onsubmit="handleCheckoutSubmit(event)" class="space-y-4">
           
-          <!-- SELEÇÃO DE ENTREGA / RETIRADA -->
+          <!-- SELEÇÃO DE MODALIDADE DE ENVIO / RETIRADA -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1.5">Como deseja receber?</label>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button 
                 type="button" 
                 onclick="setCheckoutDeliveryType('Entrega')"
-                class="p-3 rounded-2xl border-2 text-left transition-all ${checkoutDeliveryType === 'Entrega' ? 'border-brand-500 bg-brand-50 text-brand-900 font-bold' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                class="p-2.5 rounded-2xl border-2 text-left transition-all ${checkoutDeliveryType === 'Entrega' ? 'border-brand-500 bg-brand-50 text-brand-900 font-bold shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
                 <i data-lucide="truck" class="w-4 h-4 text-brand-600 mb-1"></i>
-                <div class="text-xs">Entrega em Casa</div>
-                <div class="text-[11px] text-slate-400 font-normal">Amparo e Região</div>
+                <div class="text-xs font-extrabold">Entrega Local</div>
+                <div class="text-[10px] text-slate-400 font-normal">Amparo e Região</div>
               </button>
 
               <button 
                 type="button" 
                 onclick="setCheckoutDeliveryType('Retirada')"
-                class="p-3 rounded-2xl border-2 text-left transition-all ${checkoutDeliveryType === 'Retirada' ? 'border-brand-500 bg-brand-50 text-brand-900 font-bold' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                class="p-2.5 rounded-2xl border-2 text-left transition-all ${checkoutDeliveryType === 'Retirada' ? 'border-brand-500 bg-brand-50 text-brand-900 font-bold shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
                 <i data-lucide="map-pin" class="w-4 h-4 text-brand-600 mb-1"></i>
-                <div class="text-xs">Retirar no Local</div>
-                <div class="text-[11px] text-slate-400 font-normal">Sem custo de frete</div>
+                <div class="text-xs font-extrabold">Retirar no Local</div>
+                <div class="text-[10px] text-slate-400 font-normal">Sem custo de frete</div>
+              </button>
+
+              <button 
+                type="button" 
+                onclick="setCheckoutDeliveryType('Correios')"
+                class="p-2.5 rounded-2xl border-2 text-left transition-all ${checkoutDeliveryType === 'Correios' ? 'border-brand-500 bg-brand-50 text-brand-900 font-bold shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                <i data-lucide="package" class="w-4 h-4 text-brand-600 mb-1"></i>
+                <div class="text-xs font-extrabold">Outro Estado/Cid.</div>
+                <div class="text-[10px] text-slate-400 font-normal">Correios (PAC/Sedex)</div>
               </button>
             </div>
           </div>
 
+          <!-- AVISO CORREIOS (SE SELECIONADO) -->
+          ${checkoutDeliveryType === 'Correios' ? `
+            <div class="p-3 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-900 flex items-start gap-2">
+              <i data-lucide="package" class="w-4 h-4 text-sky-600 flex-shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Envio para fora da região:</strong>
+                <p class="text-[11px] text-sky-800 mt-0.5">O frete será calculado via Correios (PAC ou Sedex) com base no seu CEP e informado no WhatsApp.</p>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- DADOS DO CLIENTE -->
-          <div class="space-y-3 pt-2">
+          <div class="space-y-3 pt-1">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Seus Dados</span>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2950,9 +3133,9 @@ function renderCheckoutModal(state) {
             </div>
           </div>
 
-          <!-- ENDEREÇO (SE ENTREGA) -->
-          ${checkoutDeliveryType === 'Entrega' ? `
-            <div class="space-y-3 pt-2">
+          <!-- ENDEREÇO (SE ENTREGA OU CORREIOS) -->
+          ${checkoutDeliveryType !== 'Retirada' ? `
+            <div class="space-y-2.5 pt-1">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Endereço de Entrega</span>
               <div class="grid grid-cols-3 gap-2">
                 <div class="col-span-2">
@@ -2962,13 +3145,16 @@ function renderCheckoutModal(state) {
                   <input type="text" name="addressNumber" required placeholder="Número *" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 <div>
-                  <input type="text" name="addressComplement" placeholder="Apto / Bloco / Ponto de ref." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                  <input type="text" name="addressComplement" placeholder="Apto / Ponto ref." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
                 <div>
-                  <input type="text" name="addressCity" required placeholder="Cidade *" value="Amparo" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                  <input type="text" name="addressCity" required placeholder="Cidade *" value="${checkoutDeliveryType === 'Entrega' ? 'Amparo' : ''}" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                   <input type="hidden" name="addressState" value="SP">
+                </div>
+                <div>
+                  <input type="text" name="addressZip" ${checkoutDeliveryType === 'Correios' ? 'required' : ''} placeholder="CEP ${checkoutDeliveryType === 'Correios' ? '*' : ''}" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
               </div>
             </div>
@@ -2979,39 +3165,305 @@ function renderCheckoutModal(state) {
             </div>
           `}
 
+          <!-- SELEÇÃO DA FORMA DE PAGAMENTO -->
+          <div class="pt-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Escolha a Forma de Pagamento:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              
+              <!-- PIX -->
+              <button 
+                type="button" 
+                onclick="setCheckoutPaymentMethod('pix')"
+                class="p-3 rounded-2xl border-2 text-left transition-all relative ${checkoutPaymentMethod === 'pix' ? 'border-emerald-500 bg-emerald-50/70 text-slate-900 shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-extrabold text-xs text-emerald-800 flex items-center gap-1.5">
+                    <i data-lucide="zap" class="w-4 h-4 text-emerald-600"></i> Pagamento via Pix
+                  </span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase">Recomendado</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-snug">QR Code e Copia e Cola gerados na hora com aprovação imediata.</p>
+              </button>
+
+              <!-- CARTÃO -->
+              <button 
+                type="button" 
+                onclick="setCheckoutPaymentMethod('cartao')"
+                class="p-3 rounded-2xl border-2 text-left transition-all ${checkoutPaymentMethod === 'cartao' ? 'border-brand-500 bg-brand-50/70 text-slate-900 shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-brand-600"></i> Cartão na Entrega
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-snug">Motoboy leva a maquininha. Débito ou Crédito.</p>
+                <span class="text-[10px] text-amber-700 font-bold block mt-1">⚠️ Taxa da maquininha a consultar</span>
+              </button>
+
+            </div>
+          </div>
+
           <!-- RESUMO DO TOTAL -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
             <div class="flex justify-between text-slate-600">
-              <span>Subtotal:</span>
+              <span>Subtotal dos itens:</span>
               <span class="font-bold">${formatMoney(subtotal)}</span>
             </div>
             ${discount > 0 ? `
-              <div class="flex justify-between text-emerald-600">
+              <div class="flex justify-between text-emerald-600 font-semibold">
                 <span>Desconto (${state.appliedCoupon.code}):</span>
-                <span class="font-bold">-${formatMoney(discount)}</span>
+                <span>-${formatMoney(discount)}</span>
               </div>
             ` : ''}
             <div class="flex justify-between text-slate-600">
               <span>Frete:</span>
-              <span class="font-bold">${shipping === 0 ? 'Grátis' : formatMoney(shipping)}</span>
+              <span class="font-bold">
+                ${checkoutDeliveryType === 'Correios' ? '<span class="text-sky-600">Cotação via WhatsApp</span>' : (shipping === 0 ? '<span class="text-emerald-600">Grátis</span>' : formatMoney(shipping))}
+              </span>
             </div>
             <div class="flex justify-between text-slate-900 font-extrabold text-sm pt-2 border-t border-slate-200">
               <span>Total a pagar:</span>
-              <span class="text-brand-600 font-heading text-lg">${formatMoney(total)}</span>
+              <span class="text-emerald-600 font-heading text-lg">${formatMoney(total)}</span>
             </div>
           </div>
 
-          <!-- BOTÃO WHATSAPP FINALIZAR -->
-          <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2.5 active:scale-95">
-            <i data-lucide="message-circle" class="w-5 h-5"></i>
-            <span>ENVIAR PEDIDO PELO WHATSAPP</span>
-          </button>
-          
-          <p class="text-[11px] text-center text-slate-400">
-            Você será direcionado para o WhatsApp da Cajuzinho com a mensagem pronta.
-          </p>
+          <!-- BOTÃO SUBMIT -->
+          ${checkoutPaymentMethod === 'pix' ? `
+            <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
+              <i data-lucide="zap" class="w-4 h-4"></i>
+              <span>AVANÇAR PARA O PAGAMENTO PIX (${formatMoney(total)})</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          ` : `
+            <button type="submit" class="w-full py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm shadow-xl shadow-brand-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
+              <i data-lucide="credit-card" class="w-4 h-4"></i>
+              <span>CONFIRMAR PEDIDO COM CARTÃO (${formatMoney(total)})</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          `}
 
         </form>
+
+      </div>
+    </div>
+  `;
+}
+
+function renderPixPaymentModal(state) {
+  const order = state.pixPaymentModalOrder;
+  if (!order) return '';
+
+  let itemsText = "";
+  order.items.forEach(item => {
+    itemsText += `• ${item.qty}x ${item.name} (${formatMoney(item.price * item.qty)})
+`;
+  });
+
+  const whatsappMessage = 
+`*NOVO PEDIDO CAJUZINHO — #${order.id}* 🍊
+
+*Cliente:* ${order.customer}
+*WhatsApp:* ${order.phone}
+*Modalidade:* ${order.deliveryType}
+*Endereço:* ${order.address}
+
+*Itens do Pedido:*
+${itemsText}
+*Subtotal:* ${formatMoney(order.subtotal)}
+${order.discount > 0 ? `*Cupom:* ${order.coupon} (-${formatMoney(order.discount)})
+` : ''}*Frete:* ${order.deliveryType === 'Correios' ? 'A calcular via Correios' : (order.shipping === 0 ? 'Grátis' : formatMoney(order.shipping))}
+*TOTAL:* ${formatMoney(order.total)}
+
+*FORMA DE PAGAMENTO:* PIX ✅
+_(Já realizei o pagamento via Pix para valinsrp@gmail.com e segue o comprovante em anexo!)_
+
+_Pedido gerado pelo site Cajuzinho Distribuidora Papapá._`;
+
+  const wpUrl = `https://wa.me/${state.settings.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  return `
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in" onclick="closePixPaymentModal()">
+      <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 overflow-hidden text-center" onclick="event.stopPropagation()">
+        
+        <!-- FECHAR -->
+        <button onclick="closePixPaymentModal()" class="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <!-- BADGE & TÍTULO -->
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold mb-3">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Pagamento via Pix</span>
+        </div>
+        <h2 class="text-2xl font-black text-slate-900 font-heading">Pedido #${order.id} Gerado!</h2>
+        <p class="text-xs text-slate-500 mt-1">Conclua o pagamento pelo seu banco para envio imediato</p>
+
+        <!-- VALOR TOTAL EM DESTAQUE -->
+        <div class="my-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80">
+          <span class="text-xs text-emerald-700 font-bold block uppercase tracking-wider">Total a Pagar:</span>
+          <div class="text-3xl sm:text-4xl font-black text-emerald-600 font-heading mt-0.5">
+            ${formatMoney(order.total)}
+          </div>
+        </div>
+
+        <!-- QR CODE OFICIAL -->
+        <div class="bg-white p-3 rounded-2xl border-2 border-slate-200 inline-block shadow-md">
+          <img 
+            src="${state.settings.pixQrCodeImage}" 
+            alt="QR Code Pix Cajuzinho" 
+            class="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-xl mx-auto">
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2 font-medium">Aponte a câmera do aplicativo do seu banco para escanear o QR Code acima</p>
+
+        <!-- PIX COPIA E COLA -->
+        <div class="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-left">
+          <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Pix Copia e Cola:</span>
+            <span class="text-emerald-600 font-extrabold text-[10px]">Toque para copiar</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <input 
+              type="text" 
+              id="pix-copy-input" 
+              readonly 
+              value="${state.settings.pixPayload}" 
+              class="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-600 truncate focus:outline-none select-all">
+            <button 
+              type="button" 
+              id="btn-copy-pix"
+              onclick="copyPixCode()" 
+              class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm whitespace-nowrap">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span id="btn-copy-text">Copiar</span>
+            </button>
+          </div>
+          <div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600">
+            <span>Chave E-mail: <strong>${state.settings.pixEmail}</strong></span>
+            <button onclick="copyPixEmail()" class="text-brand-600 hover:underline font-bold text-[11px]">Copiar E-mail</button>
+          </div>
+        </div>
+
+        <!-- PASSO A PASSO -->
+        <div class="mt-3 p-3 bg-slate-50 rounded-xl text-left text-[11px] text-slate-600 space-y-1 border border-slate-100">
+          <div class="flex items-center gap-2 font-semibold">
+            <span class="w-4 h-4 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold flex items-center justify-center">1</span>
+            <span>Copie o código ou escaneie o QR Code no seu banco.</span>
+          </div>
+          <div class="flex items-center gap-2 font-semibold">
+            <span class="w-4 h-4 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold flex items-center justify-center">2</span>
+            <span>Efetue o pagamento de ${formatMoney(order.total)}.</span>
+          </div>
+          <div class="flex items-center gap-2 font-semibold">
+            <span class="w-4 h-4 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold flex items-center justify-center">3</span>
+            <span>Clique no botão abaixo para nos enviar o comprovante!</span>
+          </div>
+        </div>
+
+        <!-- BOTÃO WHATSAPP ENVIAR COMPROVANTE -->
+        <div class="mt-5 space-y-2">
+          <a 
+            href="${wpUrl}" 
+            target="_blank" 
+            onclick="closePixPaymentModal()"
+            class="w-full py-4 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2.5 active:scale-95 transition-all text-center">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            <span>JÁ FIZ O PIX / ENVIAR COMPROVANTE NO WHATSAPP</span>
+          </a>
+
+          <button 
+            type="button" 
+            onclick="closePixPaymentModal()"
+            class="text-xs text-slate-400 hover:text-slate-600 font-medium py-1">
+            Concluir depois / Fechar janela
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+function renderCardPaymentModal(state) {
+  const order = state.cardPaymentModalOrder;
+  if (!order) return '';
+
+  let itemsText = "";
+  order.items.forEach(item => {
+    itemsText += `• ${item.qty}x ${item.name} (${formatMoney(item.price * item.qty)})
+`;
+  });
+
+  const whatsappMessage = 
+`*NOVO PEDIDO CAJUZINHO — #${order.id}* 🍊
+
+*Cliente:* ${order.customer}
+*WhatsApp:* ${order.phone}
+*Modalidade:* ${order.deliveryType}
+*Endereço:* ${order.address}
+
+*Itens do Pedido:*
+${itemsText}
+*Subtotal:* ${formatMoney(order.subtotal)}
+${order.discount > 0 ? `*Cupom:* ${order.coupon} (-${formatMoney(order.discount)})
+` : ''}*Frete:* ${order.deliveryType === 'Correios' ? 'A calcular via Correios' : (order.shipping === 0 ? 'Grátis' : formatMoney(order.shipping))}
+*TOTAL:* ${formatMoney(order.total)}
+
+*FORMA DE PAGAMENTO:* CARTÃO NA ENTREGA 💳
+_(Solicito envio da maquininha com o motoboy. Gostaria de confirmar a taxa da máquina para débito/crédito.)_
+
+_Pedido gerado pelo site Cajuzinho Distribuidora Papapá._`;
+
+  const wpUrl = `https://wa.me/${state.settings.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  return `
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in" onclick="closeCardPaymentModal()">
+      <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 overflow-hidden text-center" onclick="event.stopPropagation()">
+        
+        <button onclick="closeCardPaymentModal()" class="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-800 text-xs font-extrabold mb-3">
+          <i data-lucide="credit-card" class="w-3.5 h-3.5 text-brand-600"></i>
+          <span>Cartão de Débito / Crédito</span>
+        </div>
+        <h2 class="text-2xl font-black text-slate-900 font-heading">Pedido #${order.id} Registrado!</h2>
+        <p class="text-xs text-slate-500 mt-1">Levaremos a maquininha junto com o motoboy na entrega</p>
+
+        <div class="my-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+          <span class="text-xs text-slate-500 font-bold block uppercase tracking-wider">Total dos Produtos:</span>
+          <div class="text-3xl font-black text-slate-900 font-heading mt-0.5">
+            ${formatMoney(order.total)}
+          </div>
+        </div>
+
+        <!-- AVISO DE TAXA DA MAQUININHA -->
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-900 space-y-1.5">
+          <div class="flex items-center gap-2 font-bold text-amber-950">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+            <span>Informação sobre a Maquininha:</span>
+          </div>
+          <p class="leading-relaxed">
+            O motoboy levará a maquininha no momento da entrega do seu pacote. 
+            Lembrando que pagamentos com cartão possuem <strong>pequena taxa da operadora da máquina</strong> a ser consultada e confirmada via WhatsApp.
+          </p>
+        </div>
+
+        <div class="mt-6 space-y-2">
+          <a 
+            href="${wpUrl}" 
+            target="_blank" 
+            onclick="closeCardPaymentModal()"
+            class="w-full py-4 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2.5 active:scale-95 transition-all text-center">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            <span>CONFIRMAR PEDIDO NO WHATSAPP (19 98118-9816)</span>
+          </a>
+
+          <button 
+            type="button" 
+            onclick="closeCardPaymentModal()"
+            class="text-xs text-slate-400 hover:text-slate-600 font-medium py-1">
+            Fechar janela
+          </button>
+        </div>
 
       </div>
     </div>
@@ -3643,6 +4095,7 @@ function renderAdminPricesTab(state) {
                 <th class="p-3.5">Categoria / Subcategoria</th>
                 <th class="p-3.5">Estoque</th>
                 <th class="p-3.5">Preço Unitário (Un)</th>
+                <th class="p-3.5">Pronta Entrega</th>
                 <th class="p-3.5">Status na Loja</th>
               </tr>
             </thead>
@@ -3704,6 +4157,16 @@ function renderAdminPricesTab(state) {
                         <i data-lucide="check" class="w-4 h-4"></i>
                       </button>
                     </div>
+                  </td>
+
+                  <!-- PRONTA ENTREGA TOGGLE -->
+                  <td class="p-3.5">
+                    <button 
+                      onclick="window.appState.toggleProductReadyDelivery('${p.id}')"
+                      class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors flex items-center gap-1.5 ${p.readyDelivery ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950/60 text-amber-400 border border-amber-800/40'}">
+                      <i data-lucide="${p.readyDelivery ? 'zap' : 'clock'}" class="w-3 h-3"></i>
+                      <span>${p.readyDelivery ? 'Pronta Entrega' : 'Sob Encomenda'}</span>
+                    </button>
                   </td>
 
                   <!-- STATUS ATIVO/INATIVO -->
