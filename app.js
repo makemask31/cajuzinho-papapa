@@ -1259,7 +1259,7 @@ class AppState {
   }
 
   loadState() {
-    const CURRENT_SCHEMA = "2.3";
+    const CURRENT_SCHEMA = "3.0";
     const savedVersion = localStorage.getItem("cajuzinho_schema_version");
     let storedProducts = JSON.parse(localStorage.getItem("cajuzinho_products"));
     let storedSettings = JSON.parse(localStorage.getItem("cajuzinho_settings"));
@@ -1656,11 +1656,14 @@ function dbRowToProduct(row) {
     category: row.category,
     subcategory: row.subcategory || '',
     age: row.age || '',
-    price: parseFloat(row.price) || 0,
-    costPrice: parseFloat(row.cost_price) || 0,
+    // Preserva null para produtos sem preço ("Sob Consulta")
+    price: row.price !== null && row.price !== undefined ? parseFloat(row.price) : null,
+    costPrice: row.cost_price !== null && row.cost_price !== undefined ? parseFloat(row.cost_price) : null,
     stock: parseInt(row.stock) || 0,
     minStock: parseInt(row.min_stock) || 2,
     readyDelivery: row.ready_delivery === true,
+    // Campo active: obrigatório para aparecer na loja
+    active: row.active !== false,
     description: row.description || '',
     image: row.image || '',
     icon: row.icon || 'package',
