@@ -46,6 +46,6 @@ Basta dar um duplo clique no arquivo `index.html` na pasta do projeto (`c:\Users
 ### Opção 2: Servidor Local
 Abra o terminal nesta pasta e execute:
 ```bash
-node server.js
+node local-server.js
 ```
 E acesse `http://localhost:8080` no seu navegador.

@@ -1,12 +1,9 @@
 ﻿{
   "name": "cajuzinho-papapa",
   "version": "1.0.0",
-  "description": "Site estatico de e-commerce Cajuzinho Papapa",
+  "private": true,
+  "description": "Distribuidora Oficial Papapa - Cajuzinho",
   "scripts": {
-    "build": "echo Site estatico - sem build necessario",
-    "dev": "node server.js"
-  },
-  "keywords": ["papapa", "cajuzinho", "ecommerce"],
-  "author": "Cajuzinho Distribuidora",
-  "license": "ISC"
+    "dev": "node local-server.js"
+  }
 }
