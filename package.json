@@ -1,9 +1,0 @@
-{
-  "name": "cajuzinho-papapa",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Distribuidora Oficial Papapa - Cajuzinho",
-  "scripts": {
-    "dev": "node local-server.js"
-  }
-}

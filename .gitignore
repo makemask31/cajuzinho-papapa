@@ -1,6 +1,5 @@
 node_modules/
-*.pdf
-.git/
-pasta com referencias de catalogo/
-public/
+local-server.js
+.vercel/
+.env*
 *.log
