@@ -1,19 +1,12 @@
-{
+﻿{
   "name": "cajuzinho-papapa",
   "version": "1.0.0",
-  "description": "Sistema Web Completo de E-commerce e Gestao /adm para Cajuzinho Distribuidora Papapa",
+  "description": "Site estatico de e-commerce Cajuzinho Papapa",
   "scripts": {
-    "start": "npx serve -l 3000 ."
+    "build": "echo Site estatico - sem build necessario",
+    "dev": "node server.js"
   },
-  "keywords": [
-    "papapa",
-    "cajuzinho",
-    "ecommerce",
-    "alimentacao-infantil"
-  ],
+  "keywords": ["papapa", "cajuzinho", "ecommerce"],
   "author": "Cajuzinho Distribuidora",
-  "license": "ISC",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.117.2"
-  }
+  "license": "ISC"
 }

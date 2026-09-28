@@ -1,5 +1,6 @@
-server.js
-node_modules
+﻿server.js
+node_modules/
 package-lock.json
 supabase_schema.sql
-pasta com referencias de catalogo
+pasta com referencias de catalogo/
+.git/
