@@ -1062,6 +1062,13 @@ const INITIAL_SETTINGS = {
   address: "Rua São Sebastião, 89 - Amparo/SP",
   deliveryFee: 7.90,
   freeDeliveryThreshold: 89.00,
+  shippingCities: [
+    { name: "Amparo", fee: 7.90 },
+    { name: "Pedreira", fee: 12.00 },
+    { name: "Serra Negra", fee: 15.00 },
+    { name: "Jaguariúna", fee: 18.00 },
+    { name: "Monte Alegre do Sul", fee: 15.00 }
+  ],
   pixKey: "valinsrp@gmail.com",
   pixEmail: "valinsrp@gmail.com",
   pixPayload: "00020101021126400014BR.GOV.BCB.PIX0118valinsrp@gmail.com5204000053039865802BR5920flordemaracujaamparo6008SAOPAULO61080132305062070503***630411E6",
@@ -1260,16 +1267,19 @@ class AppState {
   }
 
   loadState() {
-    const CURRENT_SCHEMA = "3.1";
+    const CURRENT_SCHEMA = "3.2";
     const savedVersion = localStorage.getItem("cajuzinho_schema_version");
     let storedProducts = JSON.parse(localStorage.getItem("cajuzinho_products"));
     let storedSettings = JSON.parse(localStorage.getItem("cajuzinho_settings"));
 
-    // Migração de versão: sincroniza os 12 itens pronta entrega, configurações de pagamento Pix e logo da loja
+    // Migração de versão: sincroniza os 12 itens pronta entrega, configurações de pagamento Pix, logo e cidades de frete
     if (!storedProducts || savedVersion !== CURRENT_SCHEMA) {
       this.products = storedProducts || INITIAL_PRODUCTS;
       this.settings = Object.assign({}, INITIAL_SETTINGS, storedSettings || {}, {
-        logoImage: INITIAL_SETTINGS.logoImage,
+        logoImage: (storedSettings && storedSettings.logoImage) ? storedSettings.logoImage : INITIAL_SETTINGS.logoImage,
+        shippingCities: (storedSettings && storedSettings.shippingCities && storedSettings.shippingCities.length > 0)
+          ? storedSettings.shippingCities
+          : JSON.parse(JSON.stringify(INITIAL_SETTINGS.shippingCities)),
         pixKey: INITIAL_SETTINGS.pixKey,
         pixEmail: INITIAL_SETTINGS.pixEmail,
         pixPayload: INITIAL_SETTINGS.pixPayload,
@@ -1286,6 +1296,9 @@ class AppState {
     }
     if (!this.settings.logoImage) {
       this.settings.logoImage = INITIAL_SETTINGS.logoImage;
+    }
+    if (!this.settings.shippingCities || !Array.isArray(this.settings.shippingCities) || this.settings.shippingCities.length === 0) {
+      this.settings.shippingCities = JSON.parse(JSON.stringify(INITIAL_SETTINGS.shippingCities));
     }
 
     this.kits = JSON.parse(localStorage.getItem("cajuzinho_kits")) || INITIAL_KITS;
@@ -1422,17 +1435,24 @@ class AppState {
     return Math.min(this.appliedCoupon.value, subtotal);
   }
 
-  getShippingFee(deliveryType = "Entrega") {
+  getShippingFee(deliveryType = "Entrega", cityName = null) {
     if (deliveryType === "Retirada" || deliveryType === "Correios") return 0;
     const subtotal = this.getCartSubtotal();
     if (subtotal >= this.settings.freeDeliveryThreshold) return 0;
-    return this.settings.deliveryFee;
+    
+    const targetCity = (cityName || (typeof checkoutSelectedCity !== 'undefined' ? checkoutSelectedCity : "Amparo")).trim().toLowerCase();
+    const cities = this.settings.shippingCities || INITIAL_SETTINGS.shippingCities || [];
+    const found = cities.find(c => c.name.trim().toLowerCase() === targetCity);
+    if (found) {
+      return Number(found.fee) || 0;
+    }
+    return Number(this.settings.deliveryFee) || 7.90;
   }
 
-  getCartTotal(deliveryType = "Entrega") {
+  getCartTotal(deliveryType = "Entrega", cityName = null) {
     const sub = this.getCartSubtotal();
     const disc = this.getCartDiscount();
-    const ship = this.getShippingFee(deliveryType);
+    const ship = this.getShippingFee(deliveryType, cityName);
     return Math.max(0, sub - disc + ship);
   }
 
@@ -3165,10 +3185,37 @@ function renderCartDrawer(state) {
 
 let checkoutDeliveryType = "Entrega";
 let checkoutPaymentMethod = "pix";
+let checkoutSelectedCity = "Amparo";
 
 function setCheckoutDeliveryType(type) {
   checkoutDeliveryType = type;
   window.appState.notify();
+}
+
+function setCheckoutCity(city) {
+  checkoutSelectedCity = city;
+  const state = window.appState;
+  const shipping = state.getShippingFee(checkoutDeliveryType, city);
+  const total = state.getCartTotal(checkoutDeliveryType, city);
+
+  const shippingEl = document.getElementById("checkout-shipping-display");
+  if (shippingEl) {
+    if (checkoutDeliveryType === 'Correios') {
+      shippingEl.innerHTML = '<span class="text-sky-600">Cotação via WhatsApp</span>';
+    } else {
+      shippingEl.innerHTML = shipping === 0 ? '<span class="text-emerald-600 font-bold">Grátis</span>' : formatMoney(shipping);
+    }
+  }
+
+  const totalEl = document.getElementById("checkout-total-display");
+  if (totalEl) {
+    totalEl.innerText = formatMoney(total);
+  }
+
+  const btnTotalEl = document.getElementById("checkout-submit-total-text");
+  if (btnTotalEl) {
+    btnTotalEl.innerText = `(${formatMoney(total)})`;
+  }
 }
 
 function setCheckoutPaymentMethod(method) {
@@ -3257,10 +3304,11 @@ function handleCheckoutSubmit(event) {
     address = "Retirada no ponto de atendimento Cajuzinho (Rua São Sebastião, 89 - Amparo/SP)";
   }
 
+  const selectedCity = (checkoutDeliveryType !== "Retirada" && form.addressCity) ? form.addressCity.value.trim() : (checkoutDeliveryType === "Entrega" ? checkoutSelectedCity : "Amparo");
   const subtotal = state.getCartSubtotal();
   const discount = state.getCartDiscount();
-  const shipping = state.getShippingFee(checkoutDeliveryType);
-  const total = state.getCartTotal(checkoutDeliveryType);
+  const shipping = state.getShippingFee(checkoutDeliveryType, selectedCity);
+  const total = state.getCartTotal(checkoutDeliveryType, selectedCity);
   const orderId = "CJZ-" + Math.floor(1000 + Math.random() * 9000);
 
   const newOrder = {
@@ -3269,7 +3317,7 @@ function handleCheckoutSubmit(event) {
     customer: customerName,
     phone: customerPhone,
     email: customerEmail,
-    city: (checkoutDeliveryType !== "Retirada" && form.addressCity) ? form.addressCity.value.trim() : "Amparo",
+    city: selectedCity,
     address: address,
     items: state.cart.map(c => ({ id: c.id, name: c.name, qty: c.qty, price: c.price })),
     subtotal: subtotal,
@@ -3313,8 +3361,12 @@ function handleCheckoutSubmit(event) {
 function renderCheckoutModal(state) {
   const subtotal = state.getCartSubtotal();
   const discount = state.getCartDiscount();
-  const shipping = state.getShippingFee(checkoutDeliveryType);
-  const total = state.getCartTotal(checkoutDeliveryType);
+  const cities = state.settings.shippingCities || INITIAL_SETTINGS.shippingCities || [];
+  if (!cities.some(c => c.name.toLowerCase() === checkoutSelectedCity.toLowerCase()) && cities.length > 0) {
+    checkoutSelectedCity = cities[0].name;
+  }
+  const shipping = state.getShippingFee(checkoutDeliveryType, checkoutSelectedCity);
+  const total = state.getCartTotal(checkoutDeliveryType, checkoutSelectedCity);
 
   return `
     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fade-in">
@@ -3409,7 +3461,12 @@ function renderCheckoutModal(state) {
           <!-- ENDEREÇO (SE ENTREGA OU CORREIOS) -->
           ${checkoutDeliveryType !== 'Retirada' ? `
             <div class="space-y-2.5 pt-1">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Endereço de Entrega</span>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Endereço de Entrega</span>
+                ${checkoutDeliveryType === 'Entrega' ? `
+                  <span class="text-[11px] text-brand-600 font-bold">Taxa calculada pela cidade</span>
+                ` : ''}
+              </div>
               <div class="grid grid-cols-3 gap-2">
                 <div class="col-span-2">
                   <input type="text" name="addressStreet" required placeholder="Rua / Avenida *" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
@@ -3423,7 +3480,22 @@ function renderCheckoutModal(state) {
                   <input type="text" name="addressComplement" placeholder="Apto / Ponto ref." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
                 <div>
-                  <input type="text" name="addressCity" required placeholder="Cidade *" value="${checkoutDeliveryType === 'Entrega' ? 'Amparo' : ''}" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                  ${checkoutDeliveryType === 'Entrega' ? `
+                    <select 
+                      name="addressCity" 
+                      id="checkout-address-city"
+                      onchange="setCheckoutCity(this.value)" 
+                      required 
+                      class="w-full px-2.5 py-2 rounded-xl border-2 border-brand-500 bg-brand-50/70 text-slate-900 font-bold text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
+                      ${cities.map(c => `
+                        <option value="${c.name}" ${c.name.toLowerCase() === checkoutSelectedCity.toLowerCase() ? 'selected' : ''}>
+                          ${c.name} (${subtotal >= state.settings.freeDeliveryThreshold ? 'Grátis' : formatMoney(c.fee)})
+                        </option>
+                      `).join('')}
+                    </select>
+                  ` : `
+                    <input type="text" name="addressCity" required placeholder="Cidade *" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                  `}
                   <input type="hidden" name="addressState" value="SP">
                 </div>
                 <div>
@@ -3488,13 +3560,13 @@ function renderCheckoutModal(state) {
             ` : ''}
             <div class="flex justify-between text-slate-600">
               <span>Frete:</span>
-              <span class="font-bold">
-                ${checkoutDeliveryType === 'Correios' ? '<span class="text-sky-600">Cotação via WhatsApp</span>' : (shipping === 0 ? '<span class="text-emerald-600">Grátis</span>' : formatMoney(shipping))}
+              <span class="font-bold" id="checkout-shipping-display">
+                ${checkoutDeliveryType === 'Correios' ? '<span class="text-sky-600">Cotação via WhatsApp</span>' : (shipping === 0 ? '<span class="text-emerald-600 font-bold">Grátis</span>' : formatMoney(shipping))}
               </span>
             </div>
             <div class="flex justify-between text-slate-900 font-extrabold text-sm pt-2 border-t border-slate-200">
               <span>Total a pagar:</span>
-              <span class="text-emerald-600 font-heading text-lg">${formatMoney(total)}</span>
+              <span class="text-emerald-600 font-heading text-lg" id="checkout-total-display">${formatMoney(total)}</span>
             </div>
           </div>
 
@@ -3502,13 +3574,13 @@ function renderCheckoutModal(state) {
           ${checkoutPaymentMethod === 'pix' ? `
             <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
               <i data-lucide="zap" class="w-4 h-4"></i>
-              <span>AVANÇAR PARA O PAGAMENTO PIX (${formatMoney(total)})</span>
+              <span>AVANÇAR PARA O PAGAMENTO PIX <span id="checkout-submit-total-text">(${formatMoney(total)})</span></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
           ` : `
             <button type="submit" class="w-full py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm shadow-xl shadow-brand-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
               <i data-lucide="credit-card" class="w-4 h-4"></i>
-              <span>CONFIRMAR PEDIDO COM CARTÃO (${formatMoney(total)})</span>
+              <span>CONFIRMAR PEDIDO COM CARTÃO <span id="checkout-submit-total-text">(${formatMoney(total)})</span></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
           `}
@@ -5128,70 +5200,217 @@ function renderAdminSuggestionsTab(state) {
 // -------------------------------------------------------------
 
 function renderAdminSettingsTab(state) {
+  const cities = state.settings.shippingCities || INITIAL_SETTINGS.shippingCities || [];
+
   return `
     <div class="space-y-6">
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-white font-heading">Configurações da Loja</h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">Personalize dados de contato, WhatsApp e parâmetros de entrega.</p>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Personalize dados de contato, WhatsApp, parâmetros da loja e taxas de frete por cidade.</p>
       </div>
 
-      <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-sm max-w-2xl">
-        <form onsubmit="handleSettingsSave(event)" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Nome da Empresa</label>
-              <input type="text" name="storeName" value="${state.settings.storeName}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">WhatsApp de Pedidos (DDD + Número)</label>
-              <input type="text" name="whatsappNumber" value="${state.settings.whatsappNumber}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
-            </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- CARD 1: DADOS GERAIS DA LOJA -->
+        <div class="lg:col-span-7 bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800">
+            <i data-lucide="settings" class="w-4 h-4 text-brand-400"></i>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Dados Gerais & Pagamento</h2>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Slogan / Frase da Home</label>
-            <input type="text" name="slogan" value="${state.settings.slogan}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Valor da Taxa de Entrega (R$)</label>
-              <input type="number" step="0.10" name="deliveryFee" value="${state.settings.deliveryFee}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Frete Grátis Acima de (R$)</label>
-              <input type="number" step="1" name="freeDeliveryThreshold" value="${state.settings.freeDeliveryThreshold}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Endereço de Retirada / Localização</label>
-            <input type="text" name="address" value="${state.settings.address}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Logo da Loja</label>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 flex-shrink-0">
-                <img src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" alt="Preview Logo" class="w-full h-full object-cover">
+          <form onsubmit="handleSettingsSave(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Nome da Empresa</label>
+                <input type="text" name="storeName" value="${state.settings.storeName}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
               </div>
-              <input type="text" name="logoImage" value="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">WhatsApp de Pedidos (DDD + Número)</label>
+                <input type="text" name="whatsappNumber" value="${state.settings.whatsappNumber}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1">Slogan / Frase da Home</label>
+              <input type="text" name="slogan" value="${state.settings.slogan}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Taxa de Frete Padrão / Fallback (R$)</label>
+                <input type="number" step="0.10" name="deliveryFee" value="${state.settings.deliveryFee}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Frete Grátis Acima de (R$)</label>
+                <input type="number" step="1" name="freeDeliveryThreshold" value="${state.settings.freeDeliveryThreshold}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1">Endereço de Retirada / Localização</label>
+              <input type="text" name="address" value="${state.settings.address}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1">Logo da Loja</label>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 flex-shrink-0">
+                  <img src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" alt="Preview Logo" class="w-full h-full object-cover">
+                </div>
+                <input type="text" name="logoImage" value="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1">Chave Pix para Pagamento</label>
+              <input type="text" name="pixKey" value="${state.settings.pixKey}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+            </div>
+
+            <button type="submit" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md shadow-brand-600/30 transition-all flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>SALVAR ALTERAÇÕES GERAIS</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- CARD 2: GERENCIAMENTO DE FRETE POR CIDADE -->
+        <div class="lg:col-span-5 bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2 pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <i data-lucide="truck" class="w-4 h-4 text-emerald-400"></i>
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Frete por Cidade</h2>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+                ${cities.length} cidades
+              </span>
+            </div>
+            
+            <p class="text-xs text-slate-400 mb-4">
+              Cadastre as cidades atendidas para entrega e o valor do frete. O cliente poderá selecionar a cidade no checkout.
+            </p>
+
+            <!-- FORMULÁRIO DE ADIÇÃO DE CIDADE -->
+            <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 mb-5 space-y-3">
+              <span class="text-xs font-bold text-slate-200 block uppercase tracking-wider">Adicionar / Atualizar Cidade</span>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <div class="sm:col-span-7">
+                  <label class="block text-[10px] font-bold text-slate-400 mb-1">Nome da Cidade</label>
+                  <input 
+                    type="text" 
+                    id="new-city-name" 
+                    placeholder="Ex: Amparo" 
+                    class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="sm:col-span-5">
+                  <label class="block text-[10px] font-bold text-slate-400 mb-1">Valor do Frete (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.10" 
+                    id="new-city-fee" 
+                    placeholder="Ex: 7.90" 
+                    class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder:text-slate-500 font-mono focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onclick="addShippingCity(event)" 
+                class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-1.5 active:scale-95">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>ADICIONAR CIDADE</span>
+              </button>
+            </div>
+
+            <!-- LISTAGEM DE CIDADES -->
+            <span class="text-xs font-bold text-slate-300 block mb-2">Cidades Cadastradas:</span>
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              ${cities.length > 0 ? cities.map(c => `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 hover:border-slate-600 transition-colors">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center">
+                      <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <span class="text-xs font-bold text-white">${c.name}</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono font-extrabold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/60">
+                      ${formatMoney(c.fee)}
+                    </span>
+                    <button 
+                      type="button" 
+                      onclick="removeShippingCity('${c.name}')" 
+                      class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      title="Remover ${c.name}">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+              `).join('') : `
+                <div class="text-center py-6 text-slate-500 text-xs">
+                  Nenhuma cidade cadastrada ainda. Adicione uma cidade acima.
+                </div>
+              `}
             </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Chave Pix para Pagamento</label>
-            <input type="text" name="pixKey" value="${state.settings.pixKey}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+          <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-brand-400 flex-shrink-0"></i>
+            <span>As cidades salvas são atualizadas no checkout da loja imediatamente.</span>
           </div>
+        </div>
 
-          <button type="submit" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md shadow-brand-600/30 transition-all flex items-center gap-2">
-            <i data-lucide="save" class="w-4 h-4"></i>
-            <span>SALVAR ALTERAÇÕES</span>
-          </button>
-        </form>
       </div>
     </div>
   `;
+}
+
+function addShippingCity(event) {
+  if (event) event.preventDefault();
+  const nameInput = document.getElementById("new-city-name");
+  const feeInput = document.getElementById("new-city-fee");
+  if (!nameInput || !feeInput) return;
+
+  const name = nameInput.value.trim();
+  const fee = parseFloat(feeInput.value.replace(',', '.'));
+
+  if (!name) {
+    showToast("Por favor, digite o nome da cidade.", "warning");
+    return;
+  }
+  if (isNaN(fee) || fee < 0) {
+    showToast("Por favor, digite um valor de frete válido (ex: 7.90).", "warning");
+    return;
+  }
+
+  const s = window.appState.settings;
+  if (!s.shippingCities) s.shippingCities = [];
+
+  const existingIndex = s.shippingCities.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+  if (existingIndex >= 0) {
+    s.shippingCities[existingIndex].fee = fee;
+    showToast(`Valor do frete para ${name} atualizado para ${formatMoney(fee)}!`, "success");
+  } else {
+    s.shippingCities.push({ name, fee });
+    showToast(`Cidade ${name} adicionada com sucesso (${formatMoney(fee)})!`, "success");
+  }
+
+  nameInput.value = "";
+  feeInput.value = "";
+
+  window.appState.saveState();
+  saveAllSettingsToDb();
+  renderApp();
+}
+
+function removeShippingCity(cityName) {
+  const s = window.appState.settings;
+  if (!s.shippingCities) return;
+
+  s.shippingCities = s.shippingCities.filter(c => c.name.toLowerCase() !== cityName.toLowerCase());
+  window.appState.saveState();
+  saveAllSettingsToDb();
+  showToast(`Cidade ${cityName} removida da lista de frete.`, "info");
+  renderApp();
 }
 
 function handleSettingsSave(event) {
