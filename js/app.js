@@ -1050,6 +1050,7 @@ const INITIAL_COUPONS = [
 
 const INITIAL_SETTINGS = {
   storeName: "Cajuzinho",
+  logoImage: "images/imagem%20logo/logo%20cajuzinho.jpeg",
   slogan: "Papapá mais perto de você.",
   subheading: "Produtos Papapá para famílias e negócios que querem praticidade, qualidade e uma escolha mais consciente para a rotina.",
   whatsappNumber: "5519981189816",
@@ -1259,15 +1260,16 @@ class AppState {
   }
 
   loadState() {
-    const CURRENT_SCHEMA = "3.0";
+    const CURRENT_SCHEMA = "3.1";
     const savedVersion = localStorage.getItem("cajuzinho_schema_version");
     let storedProducts = JSON.parse(localStorage.getItem("cajuzinho_products"));
     let storedSettings = JSON.parse(localStorage.getItem("cajuzinho_settings"));
 
-    // Migração de versão: sincroniza os 12 itens pronta entrega e configurações de pagamento Pix
+    // Migração de versão: sincroniza os 12 itens pronta entrega, configurações de pagamento Pix e logo da loja
     if (!storedProducts || savedVersion !== CURRENT_SCHEMA) {
-      this.products = INITIAL_PRODUCTS;
+      this.products = storedProducts || INITIAL_PRODUCTS;
       this.settings = Object.assign({}, INITIAL_SETTINGS, storedSettings || {}, {
+        logoImage: INITIAL_SETTINGS.logoImage,
         pixKey: INITIAL_SETTINGS.pixKey,
         pixEmail: INITIAL_SETTINGS.pixEmail,
         pixPayload: INITIAL_SETTINGS.pixPayload,
@@ -1281,6 +1283,9 @@ class AppState {
     } else {
       this.products = storedProducts;
       this.settings = storedSettings || INITIAL_SETTINGS;
+    }
+    if (!this.settings.logoImage) {
+      this.settings.logoImage = INITIAL_SETTINGS.logoImage;
     }
 
     this.kits = JSON.parse(localStorage.getItem("cajuzinho_kits")) || INITIAL_KITS;
@@ -2092,9 +2097,12 @@ function renderStoreHeader(state) {
         <div class="flex items-center justify-between h-20">
           
           <!-- LOGO & BRANDING -->
-          <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('#loja')">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-brand-500/20">
-              <i data-lucide="sparkles" class="w-6 h-6"></i>
+          <div class="flex items-center gap-3 cursor-pointer group" onclick="navigateTo('#loja')">
+            <div class="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md shadow-brand-500/20 border-2 border-brand-100 flex-shrink-0 group-hover:scale-105 transition-transform">
+              <img 
+                src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+                alt="Cajuzinho Papapá" 
+                class="w-full h-full object-cover">
             </div>
             <div>
               <span class="text-2xl font-extrabold tracking-tight font-heading text-slate-900 block leading-tight">CAJUZINHO</span>
@@ -2713,8 +2721,13 @@ function renderStoreFooter(state) {
         <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
           
           <div class="space-y-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center font-bold text-white text-sm">C</div>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-700 shadow-sm flex-shrink-0">
+                <img 
+                  src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+                  alt="Cajuzinho Papapá" 
+                  class="w-full h-full object-cover">
+              </div>
               <span class="text-xl font-bold font-heading text-white">CAJUZINHO</span>
             </div>
             <p class="text-xs text-slate-400 leading-relaxed">${state.settings.slogan}</p>
@@ -3021,11 +3034,17 @@ function renderCartDrawer(state) {
           
           <!-- CABEÇALHO DO CARRINHO -->
           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl overflow-hidden border border-brand-100 shadow-sm flex-shrink-0">
+                <img 
+                  src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+                  alt="Cajuzinho" 
+                  class="w-full h-full object-cover">
               </div>
-              <h3 class="text-lg font-bold text-slate-900">Seu Carrinho</h3>
+              <div>
+                <h3 class="text-base font-bold text-slate-900 leading-tight">Seu Carrinho</h3>
+                <span class="text-[11px] text-brand-600 font-semibold">Cajuzinho Papapá</span>
+              </div>
             </div>
             <button onclick="toggleCartDrawer(false)" class="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
               <i data-lucide="x" class="w-5 h-5"></i>
@@ -3308,9 +3327,17 @@ function renderCheckoutModal(state) {
         
         <!-- CABEÇALHO -->
         <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
-          <div>
-            <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block">Finalização Segura</span>
-            <h3 class="text-xl font-black text-slate-900 font-heading">Concluir Pedido Cajuzinho</h3>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl overflow-hidden border border-brand-100 shadow-sm flex-shrink-0">
+              <img 
+                src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+                alt="Cajuzinho" 
+                class="w-full h-full object-cover">
+            </div>
+            <div>
+              <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block">Finalização Segura</span>
+              <h3 class="text-lg sm:text-xl font-black text-slate-900 font-heading">Concluir Pedido Cajuzinho</h3>
+            </div>
           </div>
           <button onclick="toggleCheckoutModal(false)" class="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -3540,6 +3567,12 @@ _Pedido gerado pelo site Cajuzinho Distribuidora Papapá._`;
         </button>
 
         <!-- BADGE & TÍTULO -->
+        <div class="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-2.5 shadow-md border-2 border-brand-100 flex-shrink-0">
+          <img 
+            src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+            alt="Cajuzinho" 
+            class="w-full h-full object-cover">
+        </div>
         <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold mb-3">
           <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i>
           <span>Pagamento via Pix</span>
@@ -3672,6 +3705,12 @@ _Pedido gerado pelo site Cajuzinho Distribuidora Papapá._`;
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
 
+        <div class="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-2.5 shadow-md border-2 border-brand-100 flex-shrink-0">
+          <img 
+            src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+            alt="Cajuzinho" 
+            class="w-full h-full object-cover">
+        </div>
         <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-800 text-xs font-extrabold mb-3">
           <i data-lucide="credit-card" class="w-3.5 h-3.5 text-brand-600"></i>
           <span>Cartão de Débito / Crédito</span>
@@ -3735,8 +3774,11 @@ function renderAdminLoginView(state) {
       <div class="max-w-md w-full bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-8 shadow-2xl relative z-10">
         
         <div class="text-center mb-8">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white mx-auto shadow-lg shadow-brand-500/20 mb-3">
-            <i data-lucide="shield-check" class="w-7 h-7"></i>
+          <div class="w-20 h-20 rounded-3xl overflow-hidden mx-auto shadow-xl shadow-brand-500/30 mb-3 border-2 border-brand-400/40 p-1 bg-brand-500/20">
+            <img 
+              src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+              alt="Cajuzinho Papapá" 
+              class="w-full h-full object-cover rounded-2xl">
           </div>
           <h2 class="text-2xl font-extrabold text-white font-heading tracking-tight">Painel Cajuzinho /adm</h2>
           <p class="text-xs text-slate-400 mt-1">Acesso restrito para gestão e inteligência comercial</p>
@@ -3814,8 +3856,11 @@ function renderAdminPanelView(state) {
           
           <!-- BRANDING -->
           <div class="flex items-center gap-3 px-2">
-            <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold shadow-md shadow-brand-600/30">
-              <i data-lucide="command" class="w-5 h-5"></i>
+            <div class="w-11 h-11 rounded-xl overflow-hidden border border-slate-800 shadow-md shadow-brand-600/30 flex-shrink-0">
+              <img 
+                src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+                alt="Cajuzinho" 
+                class="w-full h-full object-cover">
             </div>
             <div>
               <span class="font-extrabold text-white text-base tracking-tight font-heading block">CAJUZINHO</span>
@@ -3858,8 +3903,11 @@ function renderAdminPanelView(state) {
 
       <!-- BARRA DE NAVEGAÇÃO MOBILE -->
       <div class="md:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between sticky top-0 z-30">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white text-xs">C</div>
+        <div class="flex items-center gap-2.5">
+          <img 
+            src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" 
+            alt="Cajuzinho" 
+            class="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0">
           <span class="font-bold text-sm">Cajuzinho /adm</span>
         </div>
         <div class="flex items-center gap-2">
@@ -5127,6 +5175,16 @@ function renderAdminSettingsTab(state) {
           </div>
 
           <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Logo da Loja</label>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 flex-shrink-0">
+                <img src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" alt="Preview Logo" class="w-full h-full object-cover">
+              </div>
+              <input type="text" name="logoImage" value="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+            </div>
+          </div>
+
+          <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">Chave Pix para Pagamento</label>
             <input type="text" name="pixKey" value="${state.settings.pixKey}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
           </div>
@@ -5147,6 +5205,7 @@ function handleSettingsSave(event) {
   const s = window.appState.settings;
 
   s.storeName = form.storeName.value;
+  s.logoImage = form.logoImage ? form.logoImage.value : (s.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg');
   s.whatsappNumber = form.whatsappNumber.value.replace(/\D/g, '');
   s.slogan = form.slogan.value;
   s.deliveryFee = parseFloat(form.deliveryFee.value) || 0;
