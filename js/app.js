@@ -1597,6 +1597,34 @@ class AppState {
     }
   }
 
+  cancelOrder(orderId) {
+    if (!confirm(`Cancelar o pedido ${orderId}? O status será alterado para CANCELADO.`)) return;
+    const order = this.orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = 'CANCELADO';
+      this.saveState();
+      this.notify();
+      showToast(`Pedido ${orderId} cancelado.`, 'info');
+    }
+  }
+
+  deleteOrder(orderId) {
+    if (!confirm(`Excluir permanentemente o pedido ${orderId}? Esta ação não pode ser desfeita.`)) return;
+    this.orders = this.orders.filter(o => o.id !== orderId);
+    this.saveState();
+    this.notify();
+    showToast(`Pedido ${orderId} excluído com sucesso.`, 'info');
+  }
+
+  updateOrder(orderId, data) {
+    const order = this.orders.find(o => o.id === orderId);
+    if (!order) return;
+    Object.assign(order, data);
+    this.saveState();
+    this.notify();
+    showToast(`Pedido ${orderId} atualizado com sucesso!`, 'success');
+  }
+
   addResellerLead(lead) {
     const newLead = {
       id: "lead_" + Date.now(),
@@ -4955,10 +4983,304 @@ function renderAdminRestockTab(state) {
 }
 
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// ORDER MODAL HELPERS (detalhe e edição de pedidos)
+// -------------------------------------------------------------
+
+function closeOrderModal() {
+  document.getElementById('order-action-modal')?.remove();
+}
+
+function openOrderDetailModal(orderId) {
+  closeOrderModal();
+  const o = window.appState.orders.find(x => x.id === orderId);
+  if (!o) return;
+
+  const statusColors = {
+    'NOVO': 'bg-blue-950 text-blue-400',
+    'CONFIRMADO': 'bg-emerald-950 text-emerald-400',
+    'EM PREPARAÇÃO': 'bg-amber-950 text-amber-400',
+    'ENVIADO': 'bg-purple-950 text-purple-400',
+    'ENTREGUE': 'bg-teal-950 text-teal-400',
+    'CANCELADO': 'bg-red-950 text-red-400',
+  };
+  const badgeClass = statusColors[o.status] || 'bg-slate-800 text-slate-400';
+
+  const itemsHtml = o.items.map(item => `
+    <tr class="border-b border-slate-800/60">
+      <td class="py-2.5 pr-3 text-slate-200 text-xs">${item.name}</td>
+      <td class="py-2.5 px-2 text-center text-slate-300 text-xs font-bold">${item.qty}</td>
+      <td class="py-2.5 px-2 text-right text-slate-400 text-xs font-mono">${formatMoney(item.price)}</td>
+      <td class="py-2.5 text-right text-white font-black text-xs font-mono">${formatMoney(item.qty * item.price)}</td>
+    </tr>
+  `).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'order-action-modal';
+  overlay.className = 'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
+        <div>
+          <h2 class="text-white font-black text-lg font-heading">${o.id}</h2>
+          <p class="text-slate-400 text-xs mt-0.5">${o.date} &middot; ${o.deliveryType}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${badgeClass}">${o.status}</span>
+          <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4 overflow-y-auto">
+        <div class="bg-slate-800/50 rounded-xl p-3.5">
+          <p class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Cliente</p>
+          <p class="text-white font-bold text-sm">${o.customer}</p>
+          <p class="text-slate-400 text-xs mt-0.5">${o.phone}${o.city ? ' &middot; ' + o.city : ''}</p>
+        </div>
+
+        <div>
+          <p class="text-[10px] text-slate-500 uppercase font-bold mb-2">Itens do Pedido (${o.items.length})</p>
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-800">
+                <th class="pb-1.5 text-left text-[10px] text-slate-500 uppercase font-bold">Produto</th>
+                <th class="pb-1.5 text-center text-[10px] text-slate-500 uppercase font-bold">Qtd</th>
+                <th class="pb-1.5 text-right text-[10px] text-slate-500 uppercase font-bold">Unit.</th>
+                <th class="pb-1.5 text-right text-[10px] text-slate-500 uppercase font-bold">Total</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+        </div>
+
+        <div class="bg-slate-800/50 rounded-xl p-3.5 space-y-2">
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Subtotal</span><span class="font-mono">${formatMoney(o.subtotal)}</span>
+          </div>
+          ${o.discount > 0 ? `<div class="flex justify-between text-xs text-emerald-400">
+            <span>Desconto${o.coupon ? ' (' + o.coupon + ')' : ''}</span>
+            <span class="font-mono">- ${formatMoney(o.discount)}</span>
+          </div>` : ''}
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Frete</span>
+            <span class="font-mono">${o.shipping > 0 ? formatMoney(o.shipping) : 'Grátis'}</span>
+          </div>
+          <div class="flex justify-between text-sm font-black text-white border-t border-slate-700 pt-2">
+            <span>Total</span>
+            <span class="font-mono text-brand-400">${formatMoney(o.total)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 p-4 border-t border-slate-800 flex-shrink-0">
+        <button onclick="closeOrderModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors">Fechar</button>
+        <button onclick="closeOrderModal(); openEditOrderModal('${o.id}')" class="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Editar Pedido
+        </button>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeOrderModal(); });
+  document.body.appendChild(overlay);
+}
+
+function openEditOrderModal(orderId) {
+  closeOrderModal();
+  const o = window.appState.orders.find(x => x.id === orderId);
+  if (!o) return;
+
+  const statusOptions = ['NOVO','CONFIRMADO','EM PREPARAÇÃO','ENVIADO','ENTREGUE','CANCELADO']
+    .map(s => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s}</option>`).join('');
+
+  const itemsHtml = o.items.map((item, i) => `
+    <tr class="border-b border-slate-800/60">
+      <td class="py-2.5 pr-2 text-slate-200 text-xs leading-tight">${item.name}</td>
+      <td class="py-2.5 px-1">
+        <input type="number" min="1" value="${item.qty}" id="edit-item-qty-${i}"
+          oninput="recalcEditOrderTotals('${orderId}')"
+          class="w-14 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs text-center focus:outline-none focus:border-brand-500">
+      </td>
+      <td class="py-2.5 px-1">
+        <input type="number" min="0" step="0.01" value="${item.price}" id="edit-item-price-${i}"
+          oninput="recalcEditOrderTotals('${orderId}')"
+          class="w-20 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs text-center focus:outline-none focus:border-brand-500">
+      </td>
+      <td class="py-2.5 text-right text-white font-black text-xs font-mono" id="edit-item-sub-${i}">${formatMoney(item.qty * item.price)}</td>
+    </tr>
+  `).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'order-action-modal';
+  overlay.className = 'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
+        <div>
+          <h2 class="text-white font-black text-lg font-heading">Editar Pedido</h2>
+          <p class="text-slate-400 text-xs mt-0.5">${o.id} &middot; ${o.date}</p>
+        </div>
+        <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 overflow-y-auto">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Nome do Cliente</label>
+            <input type="text" id="edit-order-customer" value="${o.customer}"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Telefone</label>
+            <input type="text" id="edit-order-phone" value="${o.phone}"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Cidade</label>
+            <input type="text" id="edit-order-city" value="${o.city || ''}"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Modalidade</label>
+            <select id="edit-order-delivery" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+              <option value="Entrega" ${o.deliveryType === 'Entrega' ? 'selected' : ''}>Entrega</option>
+              <option value="Retirada" ${o.deliveryType === 'Retirada' ? 'selected' : ''}>Retirada</option>
+              <option value="Delivery" ${o.deliveryType === 'Delivery' ? 'selected' : ''}>Delivery</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Status</label>
+            <select id="edit-order-status" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+              ${statusOptions}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] text-slate-500 uppercase font-bold mb-2">Itens do Pedido</p>
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-800">
+                <th class="pb-1.5 text-left text-[10px] text-slate-500 uppercase font-bold">Produto</th>
+                <th class="pb-1.5 text-center text-[10px] text-slate-500 uppercase font-bold">Qtd</th>
+                <th class="pb-1.5 text-center text-[10px] text-slate-500 uppercase font-bold">Preço Unit.</th>
+                <th class="pb-1.5 text-right text-[10px] text-slate-500 uppercase font-bold">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Frete (R\$)</label>
+            <input type="number" min="0" step="0.01" id="edit-order-shipping" value="${o.shipping}"
+              oninput="recalcEditOrderTotals('${orderId}')"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Desconto (R\$)</label>
+            <input type="number" min="0" step="0.01" id="edit-order-discount" value="${o.discount}"
+              oninput="recalcEditOrderTotals('${orderId}')"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div class="bg-slate-800/50 rounded-xl p-3.5 space-y-2">
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Subtotal</span><span class="font-mono" id="edit-total-subtotal">${formatMoney(o.subtotal)}</span>
+          </div>
+          <div class="flex justify-between text-xs text-emerald-400">
+            <span>Desconto</span><span class="font-mono" id="edit-total-discount">- ${formatMoney(o.discount)}</span>
+          </div>
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Frete</span><span class="font-mono" id="edit-total-shipping">${formatMoney(o.shipping)}</span>
+          </div>
+          <div class="flex justify-between text-sm font-black text-white border-t border-slate-700 pt-2">
+            <span>Total</span><span class="font-mono text-brand-400" id="edit-total-final">${formatMoney(o.total)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 p-4 border-t border-slate-800 flex-shrink-0">
+        <button onclick="closeOrderModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors">Cancelar</button>
+        <button onclick="handleEditOrderSubmit('${o.id}')" class="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl transition-colors">
+          Salvar Alterações
+        </button>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeOrderModal(); });
+  document.body.appendChild(overlay);
+}
+
+function recalcEditOrderTotals(orderId) {
+  const o = window.appState.orders.find(x => x.id === orderId);
+  if (!o) return;
+  let subtotal = 0;
+  o.items.forEach((item, i) => {
+    const qty = parseFloat(document.getElementById('edit-item-qty-' + i)?.value) || 0;
+    const price = parseFloat(document.getElementById('edit-item-price-' + i)?.value) || 0;
+    const sub = qty * price;
+    subtotal += sub;
+    const subEl = document.getElementById('edit-item-sub-' + i);
+    if (subEl) subEl.textContent = formatMoney(sub);
+  });
+  const shipping = parseFloat(document.getElementById('edit-order-shipping')?.value) || 0;
+  const discount = parseFloat(document.getElementById('edit-order-discount')?.value) || 0;
+  const total = Math.max(0, subtotal - discount + shipping);
+  const el = id => document.getElementById(id);
+  if (el('edit-total-subtotal')) el('edit-total-subtotal').textContent = formatMoney(subtotal);
+  if (el('edit-total-discount')) el('edit-total-discount').textContent = '- ' + formatMoney(discount);
+  if (el('edit-total-shipping')) el('edit-total-shipping').textContent = formatMoney(shipping);
+  if (el('edit-total-final')) el('edit-total-final').textContent = formatMoney(total);
+}
+
+function handleEditOrderSubmit(orderId) {
+  const o = window.appState.orders.find(x => x.id === orderId);
+  if (!o) return;
+  const updatedItems = o.items.map((item, i) => ({
+    ...item,
+    qty: parseInt(document.getElementById('edit-item-qty-' + i)?.value) || item.qty,
+    price: parseFloat(document.getElementById('edit-item-price-' + i)?.value) || item.price,
+  }));
+  const shipping = parseFloat(document.getElementById('edit-order-shipping')?.value) || 0;
+  const discount = parseFloat(document.getElementById('edit-order-discount')?.value) || 0;
+  const subtotal = updatedItems.reduce((s, item) => s + item.qty * item.price, 0);
+  const total = Math.max(0, subtotal - discount + shipping);
+  const data = {
+    customer: document.getElementById('edit-order-customer')?.value.trim() || o.customer,
+    phone: document.getElementById('edit-order-phone')?.value.trim() || o.phone,
+    city: document.getElementById('edit-order-city')?.value.trim() || o.city,
+    deliveryType: document.getElementById('edit-order-delivery')?.value || o.deliveryType,
+    status: document.getElementById('edit-order-status')?.value || o.status,
+    items: updatedItems,
+    subtotal: Math.round(subtotal * 100) / 100,
+    discount: Math.round(discount * 100) / 100,
+    shipping: Math.round(shipping * 100) / 100,
+    total: Math.round(total * 100) / 100,
+  };
+  closeOrderModal();
+  window.appState.updateOrder(orderId, data);
+}
+
+// -------------------------------------------------------------
 // TAB 8: GESTÃO DE PEDIDOS
 // -------------------------------------------------------------
 
 function renderAdminOrdersTab(state) {
+  const emptyRow = `
+    <tr>
+      <td colspan="8" class="text-center py-14 text-slate-500">
+        <p class="text-sm font-medium">Nenhum pedido registrado ainda.</p>
+      </td>
+    </tr>
+  `;
+
   return `
     <div class="space-y-6">
       <div>
@@ -4966,8 +5288,8 @@ function renderAdminOrdersTab(state) {
         <p class="text-xs sm:text-sm text-slate-400 mt-1">Acompanhamento e atualização de status dos pedidos em tempo real.</p>
       </div>
 
-      <div class="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
-        <table class="w-full text-left text-xs text-slate-300">
+      <div class="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300 min-w-[920px]">
           <thead class="bg-slate-800/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider">
             <tr>
               <th class="p-3.5">Pedido</th>
@@ -4977,22 +5299,28 @@ function renderAdminOrdersTab(state) {
               <th class="p-3.5">Itens</th>
               <th class="p-3.5">Total</th>
               <th class="p-3.5">Status Atual</th>
+              <th class="p-3.5 text-center">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800">
-            ${state.orders.map(o => `
-              <tr class="hover:bg-slate-800/40">
-                <td class="p-3.5 font-mono font-bold text-white">${o.id}</td>
-                <td class="p-3.5 text-slate-400">${o.date}</td>
+            ${state.orders.length === 0 ? emptyRow : state.orders.map(o => `
+              <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-3.5 font-mono font-bold text-white whitespace-nowrap">${o.id}</td>
+                <td class="p-3.5 text-slate-400 whitespace-nowrap">${o.date}</td>
                 <td class="p-3.5">
                   <span class="font-bold text-white block">${o.customer}</span>
                   <span class="text-[10px] text-slate-400">${o.phone}</span>
                 </td>
-                <td class="p-3.5 text-slate-300">${o.deliveryType}</td>
-                <td class="p-3.5 text-slate-400">${o.items.length} produto(s)</td>
-                <td class="p-3.5 font-mono font-black text-brand-400 text-sm">${formatMoney(o.total)}</td>
+                <td class="p-3.5 text-slate-300 whitespace-nowrap">${o.deliveryType}</td>
                 <td class="p-3.5">
-                  <select 
+                  <button onclick="openOrderDetailModal('${o.id}')"
+                    class="text-brand-400 hover:text-brand-300 font-bold underline underline-offset-2 transition-colors whitespace-nowrap">
+                    ${o.items.length} produto(s)
+                  </button>
+                </td>
+                <td class="p-3.5 font-mono font-black text-brand-400 text-sm whitespace-nowrap">${formatMoney(o.total)}</td>
+                <td class="p-3.5">
+                  <select
                     onchange="window.appState.updateOrderStatus('${o.id}', this.value)"
                     class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white font-bold focus:outline-none">
                     <option value="NOVO" ${o.status === 'NOVO' ? 'selected' : ''}>NOVO</option>
@@ -5003,6 +5331,31 @@ function renderAdminOrdersTab(state) {
                     <option value="CANCELADO" ${o.status === 'CANCELADO' ? 'selected' : ''}>CANCELADO</option>
                   </select>
                 </td>
+                <td class="p-3.5">
+                  <div class="flex items-center gap-1 justify-center">
+                    <!-- Ver itens -->
+                    <button onclick="openOrderDetailModal('${o.id}')" title="Ver produtos do pedido"
+                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </button>
+                    <!-- Editar -->
+                    <button onclick="openEditOrderModal('${o.id}')" title="Editar pedido"
+                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-blue-900/60 text-slate-400 hover:text-blue-400 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <!-- Cancelar (só se não estiver já cancelado) -->
+                    ${o.status !== 'CANCELADO' ? `
+                    <button onclick="window.appState.cancelOrder('${o.id}')" title="Cancelar pedido"
+                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-900/60 text-slate-400 hover:text-amber-400 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    </button>` : ''}
+                    <!-- Excluir -->
+                    <button onclick="window.appState.deleteOrder('${o.id}')" title="Excluir pedido"
+                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-400 hover:text-red-400 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -5011,6 +5364,7 @@ function renderAdminOrdersTab(state) {
     </div>
   `;
 }
+
 
 // -------------------------------------------------------------
 // TAB 9: CUPONS DE DESCONTO
