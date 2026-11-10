@@ -3450,7 +3450,7 @@ function handleCheckoutSubmit(event) {
     shipping: shipping,
     total: total,
     deliveryType: checkoutDeliveryType,
-    paymentMethod: checkoutPaymentMethod === "pix" ? "PIX" : "CARTÃO NA ENTREGA",
+    paymentMethod: "PIX",
     status: "NOVO"
   };
 
@@ -3636,35 +3636,21 @@ function renderCheckoutModal(state) {
 
           <!-- SELEÇÃO DA FORMA DE PAGAMENTO -->
           <div class="pt-2">
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Escolha a Forma de Pagamento:</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Forma de Pagamento:</label>
+            <div class="grid grid-cols-1 gap-2.5">
               
               <!-- PIX -->
               <button 
                 type="button" 
                 onclick="setCheckoutPaymentMethod('pix')"
-                class="p-3 rounded-2xl border-2 text-left transition-all relative ${checkoutPaymentMethod === 'pix' ? 'border-emerald-500 bg-emerald-50/70 text-slate-900 shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
+                class="p-3 rounded-2xl border-2 text-left transition-all relative border-emerald-500 bg-emerald-50/70 text-slate-900 shadow-sm">
                 <div class="flex items-center justify-between mb-1">
                   <span class="font-extrabold text-xs text-emerald-800 flex items-center gap-1.5">
                     <i data-lucide="zap" class="w-4 h-4 text-emerald-600"></i> Pagamento via Pix
                   </span>
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase">Recomendado</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase">Único método</span>
                 </div>
                 <p class="text-[11px] text-slate-600 leading-snug">QR Code e Copia e Cola gerados na hora com aprovação imediata.</p>
-              </button>
-
-              <!-- CARTÃO -->
-              <button 
-                type="button" 
-                onclick="setCheckoutPaymentMethod('cartao')"
-                class="p-3 rounded-2xl border-2 text-left transition-all ${checkoutPaymentMethod === 'cartao' ? 'border-brand-500 bg-brand-50/70 text-slate-900 shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
-                    <i data-lucide="credit-card" class="w-4 h-4 text-brand-600"></i> Cartão na Entrega
-                  </span>
-                </div>
-                <p class="text-[11px] text-slate-600 leading-snug">Motoboy leva a maquininha. Débito ou Crédito.</p>
-                <span class="text-[10px] text-amber-700 font-bold block mt-1">⚠️ Taxa da maquininha a consultar</span>
               </button>
 
             </div>
@@ -3695,19 +3681,11 @@ function renderCheckoutModal(state) {
           </div>
 
           <!-- BOTÃO SUBMIT -->
-          ${checkoutPaymentMethod === 'pix' ? `
-            <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
-              <i data-lucide="zap" class="w-4 h-4"></i>
-              <span>AVANÇAR PARA O PAGAMENTO PIX <span id="checkout-submit-total-text">(${formatMoney(total)})</span></span>
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
-          ` : `
-            <button type="submit" class="w-full py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm shadow-xl shadow-brand-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
-              <i data-lucide="credit-card" class="w-4 h-4"></i>
-              <span>CONFIRMAR PEDIDO COM CARTÃO <span id="checkout-submit-total-text">(${formatMoney(total)})</span></span>
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
-          `}
+          <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>AVANÇAR PARA O PAGAMENTO PIX <span id="checkout-submit-total-text">(${formatMoney(total)})</span></span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
 
         </form>
 
