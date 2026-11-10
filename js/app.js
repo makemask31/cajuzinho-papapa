@@ -1086,6 +1086,7 @@ const INITIAL_ORDERS = [
     customer: "Fernanda Ribeiro",
     phone: "(19) 99781-4422",
     city: "Amparo/SP",
+    address: "Rua São Sebastião, 145, Apto 2 - Centro - Amparo/SP - CEP: 13900-000",
     items: [
       { id: "p_carne_arroz_legumes", name: "Papinha Carne & Legumes 120g", qty: 3, price: 8.90 },
       { id: "p_banana_mirtilo_quinoa", name: "Papinha Banana Mirtilo Quinoa 100g", qty: 2, price: 6.24 },
@@ -1105,6 +1106,7 @@ const INITIAL_ORDERS = [
     customer: "Juliana Mendes",
     phone: "(19) 98223-9901",
     city: "Pedreira/SP",
+    address: "Retirada no ponto de atendimento Cajuzinho (Rua São Sebastião, 89 - Amparo/SP)",
     items: [
       { id: "kit_rotina_saudavel", name: "Kit Rotina Saudável Cajuzinho", qty: 1, price: 34.50 },
       { id: "p_yoguzinho_vermelhas", name: "Yoguzinho Frutas Vermelhas 100g", qty: 2, price: 6.24 }
@@ -1123,6 +1125,7 @@ const INITIAL_ORDERS = [
     customer: "Rodrigo Alcantara (Empório Natural)",
     phone: "(19) 99112-3344",
     city: "Amparo/SP",
+    address: "Av. Carlos Burgos, 1820 - Jardim Primavera - Amparo/SP - CEP: 13902-000",
     items: [
       { id: "p_frango_grao_vegetais", name: "Papinha Frango & Vegetais 120g", qty: 12, price: 8.90 },
       { id: "p_maca_ameixa", name: "Papinha Maçã e Ameixa 100g", qty: 12, price: 6.24 },
@@ -1142,6 +1145,7 @@ const INITIAL_ORDERS = [
     customer: "Camila Nogueira",
     phone: "(19) 99654-7711",
     city: "Jaguariúna/SP",
+    address: "Rua Minas Gerais, 310 - Jardim Imperial - Jaguariúna/SP - CEP: 13820-000",
     items: [
       { id: "p_yoguzinho_amarelas", name: "Yoguzinho Frutas Amarelas 100g", qty: 3, price: 6.24 },
       { id: "p_yoguzinho_vermelhas", name: "Yoguzinho Frutas Vermelhas 100g", qty: 3, price: 6.24 }
@@ -1303,7 +1307,21 @@ class AppState {
 
     this.kits = JSON.parse(localStorage.getItem("cajuzinho_kits")) || INITIAL_KITS;
     this.coupons = JSON.parse(localStorage.getItem("cajuzinho_coupons")) || INITIAL_COUPONS;
-    this.orders = JSON.parse(localStorage.getItem("cajuzinho_orders")) || INITIAL_ORDERS;
+    const storedOrders = JSON.parse(localStorage.getItem("cajuzinho_orders"));
+    this.orders = (storedOrders && Array.isArray(storedOrders) && storedOrders.length > 0)
+      ? storedOrders.map(o => {
+          if (!o.address) {
+            if (o.deliveryType === 'Retirada') {
+              o.address = `Retirada no ponto de atendimento Cajuzinho (${this.settings.address || 'Rua São Sebastião, 89 - Amparo/SP'})`;
+            } else if (o.city) {
+              o.address = `Rua Central, 100 - Centro - ${o.city}`;
+            } else {
+              o.address = 'Endereço não informado';
+            }
+          }
+          return o;
+        })
+      : INITIAL_ORDERS;
     this.losses = JSON.parse(localStorage.getItem("cajuzinho_losses")) || INITIAL_LOSSES;
     this.leads = JSON.parse(localStorage.getItem("cajuzinho_leads")) || INITIAL_RESELLER_LEADS;
     this.suggestions = JSON.parse(localStorage.getItem("cajuzinho_suggestions")) || INITIAL_SUGGESTIONS;
@@ -3325,11 +3343,23 @@ function handleCheckoutSubmit(event) {
   
   let address = "";
   if (checkoutDeliveryType === "Entrega") {
-    address = `${form.addressStreet.value.trim()}, ${form.addressNumber.value.trim()} ${form.addressComplement ? form.addressComplement.value.trim() : ''} - ${form.addressCity.value.trim()}/${form.addressState.value}`;
+    const street = (form.addressStreet ? form.addressStreet.value : "").trim();
+    const number = (form.addressNumber ? form.addressNumber.value : "").trim();
+    const complement = (form.addressComplement ? form.addressComplement.value : "").trim();
+    const city = (form.addressCity ? form.addressCity.value : checkoutSelectedCity || "Amparo").trim();
+    const stateUf = (form.addressState ? form.addressState.value : "SP").trim();
+    const zip = (form.addressZip ? form.addressZip.value : "").trim();
+    address = `${street}, ${number}${complement ? ' (' + complement + ')' : ''} - ${city}/${stateUf}${zip ? ' - CEP: ' + zip : ''}`;
   } else if (checkoutDeliveryType === "Correios") {
-    address = `Envio Correios: ${form.addressStreet.value.trim()}, ${form.addressNumber.value.trim()} ${form.addressComplement ? form.addressComplement.value.trim() : ''} - CEP: ${form.addressZip ? form.addressZip.value.trim() : ''} - ${form.addressCity.value.trim()}/${form.addressState.value}`;
+    const street = (form.addressStreet ? form.addressStreet.value : "").trim();
+    const number = (form.addressNumber ? form.addressNumber.value : "").trim();
+    const complement = (form.addressComplement ? form.addressComplement.value : "").trim();
+    const city = (form.addressCity ? form.addressCity.value : "").trim();
+    const stateUf = (form.addressState ? form.addressState.value : "SP").trim();
+    const zip = (form.addressZip ? form.addressZip.value : "").trim();
+    address = `Envio Correios: ${street}, ${number}${complement ? ' (' + complement + ')' : ''} - ${city}/${stateUf}${zip ? ' - CEP: ' + zip : ''}`;
   } else {
-    address = "Retirada no ponto de atendimento Cajuzinho (Rua São Sebastião, 89 - Amparo/SP)";
+    address = `Retirada no ponto de atendimento Cajuzinho (${state.settings.address || 'Rua São Sebastião, 89 - Amparo/SP'})`;
   }
 
   const selectedCity = (checkoutDeliveryType !== "Retirada" && form.addressCity) ? form.addressCity.value.trim() : (checkoutDeliveryType === "Entrega" ? checkoutSelectedCity : "Amparo");
@@ -5019,11 +5049,11 @@ function openOrderDetailModal(orderId) {
   overlay.id = 'order-action-modal';
   overlay.className = 'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4';
   overlay.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
         <div>
           <h2 class="text-white font-black text-lg font-heading">${o.id}</h2>
-          <p class="text-slate-400 text-xs mt-0.5">${o.date} &middot; ${o.deliveryType}</p>
+          <p class="text-slate-400 text-xs mt-0.5">${o.date} &middot; <span class="text-brand-400 font-bold">${o.deliveryType}</span></p>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${badgeClass}">${o.status}</span>
@@ -5034,10 +5064,47 @@ function openOrderDetailModal(orderId) {
       </div>
 
       <div class="p-5 space-y-4 overflow-y-auto">
-        <div class="bg-slate-800/50 rounded-xl p-3.5">
-          <p class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Cliente</p>
-          <p class="text-white font-bold text-sm">${o.customer}</p>
-          <p class="text-slate-400 text-xs mt-0.5">${o.phone}${o.city ? ' &middot; ' + o.city : ''}</p>
+        <!-- DADOS DO CLIENTE & CONTATO -->
+        <div class="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cliente</p>
+              <p class="text-white font-extrabold text-sm">${o.customer}</p>
+              <p class="text-slate-400 text-xs mt-0.5">${o.email ? o.email : 'Sem e-mail cadastrado'}</p>
+            </div>
+            ${o.phone ? `
+              <a href="https://wa.me/55${o.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Olá ' + o.customer + '! Falamos da Cajuzinho Papapá sobre o pedido ' + o.id + '.')}" 
+                target="_blank" 
+                class="px-3 py-1.5 rounded-lg bg-emerald-950/90 border border-emerald-600/50 text-emerald-400 hover:bg-emerald-900 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                Conversar no WhatsApp (${o.phone})
+              </a>
+            ` : ''}
+          </div>
+
+          <!-- ENDEREÇO DE ENTREGA EM DESTAQUE -->
+          <div class="pt-3 border-t border-slate-700/60">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] text-brand-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Endereço de Entrega (${o.deliveryType || 'Entrega'})
+              </span>
+              ${o.address && o.deliveryType !== 'Retirada' ? `
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyToClipboard('${o.address.replace(/'/g, "\\'")}', 'Endereço copiado!')" class="text-[10px] text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-md border border-slate-600 transition-colors flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    Copiar
+                  </button>
+                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}" target="_blank" class="text-[10px] text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-0.5">
+                    Abrir no Maps &rarr;
+                  </a>
+                </div>
+              ` : ''}
+            </div>
+            <div class="bg-slate-900/90 rounded-lg p-2.5 border border-slate-700/70 text-xs text-slate-100 font-mono leading-relaxed select-all">
+              ${o.address || (o.city ? `Cidade: ${o.city}` : 'Endereço não informado')}
+            </div>
+          </div>
         </div>
 
         <div>
@@ -5116,7 +5183,7 @@ function openEditOrderModal(orderId) {
   overlay.id = 'order-action-modal';
   overlay.className = 'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4';
   overlay.innerHTML = `
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
         <div>
           <h2 class="text-white font-black text-lg font-heading">Editar Pedido</h2>
@@ -5144,12 +5211,21 @@ function openEditOrderModal(orderId) {
             <input type="text" id="edit-order-city" value="${o.city || ''}"
               class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
           </div>
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1.5 flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Endereço Completo de Entrega
+            </label>
+            <input type="text" id="edit-order-address" value="${o.address || ''}" placeholder="Ex: Rua São Sebastião, 145, Apto 2 - Centro - Amparo/SP"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
+          </div>
           <div>
             <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Modalidade</label>
             <select id="edit-order-delivery" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brand-500">
               <option value="Entrega" ${o.deliveryType === 'Entrega' ? 'selected' : ''}>Entrega</option>
               <option value="Retirada" ${o.deliveryType === 'Retirada' ? 'selected' : ''}>Retirada</option>
               <option value="Delivery" ${o.deliveryType === 'Delivery' ? 'selected' : ''}>Delivery</option>
+              <option value="Correios" ${o.deliveryType === 'Correios' ? 'selected' : ''}>Correios</option>
             </select>
           </div>
           <div>
@@ -5256,6 +5332,7 @@ function handleEditOrderSubmit(orderId) {
     customer: document.getElementById('edit-order-customer')?.value.trim() || o.customer,
     phone: document.getElementById('edit-order-phone')?.value.trim() || o.phone,
     city: document.getElementById('edit-order-city')?.value.trim() || o.city,
+    address: document.getElementById('edit-order-address')?.value.trim() || o.address || '',
     deliveryType: document.getElementById('edit-order-delivery')?.value || o.deliveryType,
     status: document.getElementById('edit-order-status')?.value || o.status,
     items: updatedItems,
@@ -5275,7 +5352,7 @@ function handleEditOrderSubmit(orderId) {
 function renderAdminOrdersTab(state) {
   const emptyRow = `
     <tr>
-      <td colspan="8" class="text-center py-14 text-slate-500">
+      <td colspan="9" class="text-center py-14 text-slate-500">
         <p class="text-sm font-medium">Nenhum pedido registrado ainda.</p>
       </td>
     </tr>
@@ -5285,16 +5362,17 @@ function renderAdminOrdersTab(state) {
     <div class="space-y-6">
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-white font-heading">Gestão de Pedidos</h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">Acompanhamento e atualização de status dos pedidos em tempo real.</p>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Acompanhamento e atualização de status dos pedidos em tempo real com endereço completo de entrega.</p>
       </div>
 
       <div class="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-300 min-w-[920px]">
+        <table class="w-full text-left text-xs text-slate-300 min-w-[1080px]">
           <thead class="bg-slate-800/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider">
             <tr>
               <th class="p-3.5">Pedido</th>
               <th class="p-3.5">Data / Hora</th>
               <th class="p-3.5">Cliente</th>
+              <th class="p-3.5">Endereço de Entrega</th>
               <th class="p-3.5">Modalidade</th>
               <th class="p-3.5">Itens</th>
               <th class="p-3.5">Total</th>
@@ -5307,9 +5385,45 @@ function renderAdminOrdersTab(state) {
               <tr class="hover:bg-slate-800/40 transition-colors">
                 <td class="p-3.5 font-mono font-bold text-white whitespace-nowrap">${o.id}</td>
                 <td class="p-3.5 text-slate-400 whitespace-nowrap">${o.date}</td>
-                <td class="p-3.5">
+                <td class="p-3.5 whitespace-nowrap">
                   <span class="font-bold text-white block">${o.customer}</span>
-                  <span class="text-[10px] text-slate-400">${o.phone}</span>
+                  ${o.phone ? `
+                    <a href="https://wa.me/55${o.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Olá ' + o.customer + '! Falamos da Cajuzinho Papapá sobre o pedido ' + o.id + '.')}" 
+                      target="_blank" 
+                      class="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 font-mono mt-0.5" 
+                      title="Conversar no WhatsApp">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                      ${o.phone}
+                    </a>
+                  ` : ''}
+                </td>
+                <td class="p-3.5 max-w-[280px]">
+                  ${o.deliveryType === 'Retirada' ? `
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-950/60 border border-amber-800/40 text-[11px] text-amber-300 font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                      Retirada no Ponto
+                    </span>
+                  ` : `
+                    <div class="flex items-start gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      <div class="min-w-0">
+                        <span class="text-white text-xs leading-tight block select-all font-medium" title="${o.address || o.city || 'Não informado'}">
+                          ${o.address || (o.city ? `Cidade: ${o.city}` : 'Endereço não informado')}
+                        </span>
+                        ${o.address ? `
+                          <div class="flex items-center gap-2 mt-1">
+                            <button type="button" onclick="copyToClipboard('${o.address.replace(/'/g, "\\'")}', 'Endereço copiado!')" class="text-[10px] text-slate-400 hover:text-white flex items-center gap-0.5 bg-slate-800/80 hover:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-700 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                              Copiar
+                            </button>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}" target="_blank" class="text-[10px] text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-0.5">
+                              Maps &rarr;
+                            </a>
+                          </div>
+                        ` : ''}
+                      </div>
+                    </div>
+                  `}
                 </td>
                 <td class="p-3.5 text-slate-300 whitespace-nowrap">${o.deliveryType}</td>
                 <td class="p-3.5">
@@ -5333,13 +5447,13 @@ function renderAdminOrdersTab(state) {
                 </td>
                 <td class="p-3.5">
                   <div class="flex items-center gap-1 justify-center">
-                    <!-- Ver itens -->
-                    <button onclick="openOrderDetailModal('${o.id}')" title="Ver produtos do pedido"
+                    <!-- Ver itens e endereço completo -->
+                    <button onclick="openOrderDetailModal('${o.id}')" title="Ver detalhes e endereço"
                       class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </button>
                     <!-- Editar -->
-                    <button onclick="openEditOrderModal('${o.id}')" title="Editar pedido"
+                    <button onclick="openEditOrderModal('${o.id}')" title="Editar pedido e endereço"
                       class="p-1.5 rounded-lg bg-slate-800 hover:bg-blue-900/60 text-slate-400 hover:text-blue-400 transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
