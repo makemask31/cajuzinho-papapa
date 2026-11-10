@@ -4472,6 +4472,103 @@ function renderAdminInsightsTab(state) {
 // PRODUCT MODAL HELPERS (edição completa de produto)
 // -------------------------------------------------------------
 
+// -------------------------------------------------------------
+// IMAGE PROCESSING HELPERS (Upload direto em HD para o banco)
+// -------------------------------------------------------------
+
+function processImageFile(file, maxWidth = 1000, quality = 0.88) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error("Selecione um arquivo de imagem válido (PNG, JPG, JPEG ou WEBP)."));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Erro ao ler o arquivo selecionado."));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Erro ao decodificar os dados da imagem."));
+      img.onload = () => {
+        let w = img.width;
+        let h = img.height;
+        // Redimensiona proporcionalmente mantendo alta resolução (HD)
+        if (w > maxWidth || h > maxWidth) {
+          if (w > h) {
+            h = Math.round((h * maxWidth) / w);
+            w = maxWidth;
+          } else {
+            w = Math.round((w * maxWidth) / h);
+            h = maxWidth;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+
+        let dataUrl = canvas.toDataURL('image/webp', quality);
+        if (!dataUrl.startsWith('data:image/webp')) {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        const sizeKb = Math.round((dataUrl.length * 0.75) / 1024);
+        resolve({
+          dataUrl,
+          width: w,
+          height: h,
+          sizeKb,
+          name: file.name
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleProductImageFileSelect(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('edit-prod-upload-status');
+  if (statusEl) {
+    statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">Otimizando imagem em HD...</span>';
+  }
+
+  try {
+    const result = await processImageFile(file, 1000, 0.88);
+    const imgPreview = document.getElementById('edit-prod-preview');
+    if (imgPreview) imgPreview.src = result.dataUrl;
+
+    const inputImage = document.getElementById('edit-prod-image');
+    if (inputImage) inputImage.value = result.dataUrl;
+
+    if (statusEl) {
+      statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Imagem HD pronta (${result.sizeKb} KB)</span>`;
+    }
+    showToast(`Imagem "${file.name}" carregada em alta definição! Salve as alterações para confirmar.`, "success");
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-rose-400 font-bold">Falha no processamento</span>';
+    showToast(err.message || "Erro ao processar imagem.", "error");
+  }
+}
+
+async function handleStoreLogoUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const result = await processImageFile(file, 600, 0.90);
+    const preview = document.getElementById('settings-logo-preview');
+    if (preview) preview.src = result.dataUrl;
+    const input = document.getElementById('settings-logo-input');
+    if (input) input.value = result.dataUrl;
+    showToast(`Logo "${file.name}" carregada com sucesso! Clique em salvar alterações gerais.`, "success");
+  } catch (err) {
+    showToast(err.message || "Erro ao processar imagem da logo.", "error");
+  }
+}
+
 function closeProductModal() {
   document.getElementById('product-edit-modal')?.remove();
 }
@@ -4516,27 +4613,47 @@ function openEditProductModal(productId) {
       <!-- CORPO DO FORMULÁRIO -->
       <div class="p-5 sm:p-6 space-y-5 overflow-y-auto">
         
-        <!-- SEÇÃO: FOTO & IDENTIFICAÇÃO BÁSICA -->
+        <!-- SEÇÃO: FOTO (UPLOAD DIRETO EM HD) & IDENTIFICAÇÃO BÁSICA -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
           <div class="sm:col-span-1 flex flex-col items-center">
-            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-2 self-start">Foto do Produto</label>
-            <div class="w-28 h-28 rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700/80 p-2 flex items-center justify-center relative group shadow-inner">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-2 self-start">Foto do Produto (HD)</label>
+            <div class="w-32 h-32 rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700/80 p-2 flex items-center justify-center relative shadow-inner group">
               <img id="edit-prod-preview" src="${p.image}" alt="${p.name}" class="w-full h-full object-contain" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
+              <div class="absolute bottom-1 right-1 bg-black/75 px-1.5 py-0.5 rounded text-[9px] text-brand-400 font-mono font-black">HD</div>
             </div>
-            <span class="text-[10px] text-slate-500 mt-2 text-center">Prévia em tempo real</span>
+            <span id="edit-prod-upload-status" class="text-[10px] text-slate-400 mt-2 text-center">Foto pronta no banco</span>
           </div>
 
           <div class="sm:col-span-2 space-y-3">
             <div>
-              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Caminho / URL da Foto *</label>
-              <input 
-                type="text" 
-                id="edit-prod-image" 
-                value="${p.image || ''}" 
-                placeholder="Ex: images/products/papinha_maca_ameixa.jpg ou URL https://..." 
-                oninput="updateEditProdPreview(this.value)"
-                class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
-              <p class="text-[10px] text-slate-500 mt-1">Insira o caminho local na pasta images ou qualquer link da web.</p>
+              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1.5">Subir Foto do Computador / Celular</label>
+              <div class="flex items-center gap-2">
+                <label for="edit-prod-file-input" class="cursor-pointer flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-md shadow-brand-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  <span>Escolher Imagem (PNG, JPG, WEBP)</span>
+                </label>
+                <input type="file" id="edit-prod-file-input" accept="image/*" class="hidden" onchange="handleProductImageFileSelect(event)">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">
+                A foto é processada em alta definição e salva diretamente no banco de dados.
+              </p>
+            </div>
+
+            <div>
+              <details class="text-[11px] text-slate-400 group">
+                <summary class="cursor-pointer hover:text-white transition-colors text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+                  + Ou usar caminho / link manual
+                </summary>
+                <div class="mt-1.5">
+                  <input 
+                    type="text" 
+                    id="edit-prod-image" 
+                    value="${p.image || ''}" 
+                    placeholder="Ex: images/products/papinha_maca_ameixa.jpg ou URL https://..." 
+                    oninput="updateEditProdPreview(this.value)"
+                    class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+              </details>
             </div>
 
             <div>
@@ -6092,10 +6209,19 @@ function renderAdminSettingsTab(state) {
             <div>
               <label class="block text-xs font-bold text-slate-300 mb-1">Logo da Loja</label>
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 flex-shrink-0">
-                  <img src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" alt="Preview Logo" class="w-full h-full object-cover">
+                <div class="w-14 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 flex-shrink-0 p-1">
+                  <img id="settings-logo-preview" src="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" alt="Preview Logo" class="w-full h-full object-cover rounded-lg" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
                 </div>
-                <input type="text" name="logoImage" value="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono">
+                <div class="flex-1 space-y-1.5">
+                  <div class="flex items-center gap-2">
+                    <label for="settings-logo-file" class="cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-colors flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                      <span>Subir Imagem da Logo</span>
+                    </label>
+                    <input type="file" id="settings-logo-file" accept="image/*" class="hidden" onchange="handleStoreLogoUpload(event)">
+                  </div>
+                  <input type="text" id="settings-logo-input" name="logoImage" value="${state.settings.logoImage || 'images/imagem%20logo/logo%20cajuzinho.jpeg'}" oninput="document.getElementById('settings-logo-preview').src = this.value" class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono" placeholder="Caminho ou URL da logo">
+                </div>
               </div>
             </div>
 
