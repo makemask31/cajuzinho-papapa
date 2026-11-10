@@ -1558,6 +1558,18 @@ class AppState {
     }
   }
 
+  updateProduct(productId, data) {
+    const prod = this.products.find(p => p.id === productId);
+    if (!prod) return;
+    Object.assign(prod, data);
+    this.saveState();
+    this.notify();
+    if (typeof upsertProductToDb === 'function') {
+      upsertProductToDb(prod);
+    }
+    showToast(`Produto "${prod.name}" atualizado com sucesso!`, "success");
+  }
+
   recordStockMovement(productId, type, quantity, reason = "") {
     const prod = this.products.find(p => p.id === productId);
     if (!prod) return;
@@ -1855,6 +1867,8 @@ async function upsertProductToDb(product) {
       stock: product.stock,
       min_stock: product.minStock || 2,
       ready_delivery: product.readyDelivery === true,
+      active: product.active !== false,
+      featured: product.featured === true,
       description: product.description || '',
       image: product.image || '',
       icon: product.icon || 'package',
@@ -4454,6 +4468,328 @@ function renderAdminInsightsTab(state) {
   `;
 }
 
+// // -------------------------------------------------------------
+// PRODUCT MODAL HELPERS (edição completa de produto)
+// -------------------------------------------------------------
+
+function closeProductModal() {
+  document.getElementById('product-edit-modal')?.remove();
+}
+
+function updateEditProdPreview(url) {
+  const img = document.getElementById('edit-prod-preview');
+  if (img) {
+    img.src = url.trim() || 'images/imagem%20logo/logo%20cajuzinho.jpeg';
+  }
+}
+
+function openEditProductModal(productId) {
+  closeProductModal();
+  const p = window.appState.products.find(x => x.id === productId);
+  if (!p) return;
+
+  const categories = ["Papinhas", "Snacks", "Cereais", "Massas", "Bebidas", "Acessórios"];
+  const categoryOptions = categories.map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'product-edit-modal';
+  overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in';
+  overlay.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- CABEÇALHO -->
+      <div class="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/90 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-950 border border-brand-800/60 flex items-center justify-center text-brand-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-white font-black text-lg font-heading">Editar Produto</h2>
+            <p class="text-slate-400 text-xs font-mono mt-0.5">${p.id} ${p.code ? ' &middot; Cód: ' + p.code : ''}</p>
+          </div>
+        </div>
+        <button onclick="closeProductModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- CORPO DO FORMULÁRIO -->
+      <div class="p-5 sm:p-6 space-y-5 overflow-y-auto">
+        
+        <!-- SEÇÃO: FOTO & IDENTIFICAÇÃO BÁSICA -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div class="sm:col-span-1 flex flex-col items-center">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-2 self-start">Foto do Produto</label>
+            <div class="w-28 h-28 rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700/80 p-2 flex items-center justify-center relative group shadow-inner">
+              <img id="edit-prod-preview" src="${p.image}" alt="${p.name}" class="w-full h-full object-contain" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
+            </div>
+            <span class="text-[10px] text-slate-500 mt-2 text-center">Prévia em tempo real</span>
+          </div>
+
+          <div class="sm:col-span-2 space-y-3">
+            <div>
+              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Caminho / URL da Foto *</label>
+              <input 
+                type="text" 
+                id="edit-prod-image" 
+                value="${p.image || ''}" 
+                placeholder="Ex: images/products/papinha_maca_ameixa.jpg ou URL https://..." 
+                oninput="updateEditProdPreview(this.value)"
+                class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+              <p class="text-[10px] text-slate-500 mt-1">Insira o caminho local na pasta images ou qualquer link da web.</p>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome Completo do Produto *</label>
+              <input 
+                type="text" 
+                id="edit-prod-name" 
+                value="${p.name || ''}" 
+                required 
+                placeholder="Ex: Papinha Orgânica Maçã e Ameixa 100g" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: PREÇOS & ESTOQUE -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <label class="block text-[10px] text-brand-400 uppercase font-bold mb-1">Preço Venda (R$)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              id="edit-prod-price" 
+              value="${p.price !== null ? p.price : ''}" 
+              placeholder="0.00" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-brand-500/40 text-brand-400 font-mono font-black text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Vazio = Sob Consulta</span>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Preço Custo (R$)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              id="edit-prod-cost" 
+              value="${p.costPrice || ''}" 
+              placeholder="0.00" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 font-mono text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Para margem de lucro</span>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Estoque Atual (Un)</label>
+            <input 
+              type="number" 
+              min="0" 
+              id="edit-prod-stock" 
+              value="${p.stock}" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Saldo disponível</span>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Estoque Mínimo</label>
+            <input 
+              type="number" 
+              min="0" 
+              id="edit-prod-min-stock" 
+              value="${p.minStock || 2}" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Alerta de reposição</span>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: CATEGORIZAÇÃO & CARACTERÍSTICAS -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Categoria Principal</label>
+            <select id="edit-prod-category" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-500">
+              ${categoryOptions}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Subcategoria</label>
+            <input 
+              type="text" 
+              id="edit-prod-subcategory" 
+              value="${p.subcategory || ''}" 
+              placeholder="Ex: Papinhas Salgadas" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Faixa Etária</label>
+            <input 
+              type="text" 
+              id="edit-prod-age" 
+              value="${p.age || ''}" 
+              placeholder="Ex: +6m, +8m, +12m" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Peso / Volume</label>
+            <input 
+              type="text" 
+              id="edit-prod-weight" 
+              value="${p.weight || ''}" 
+              placeholder="Ex: 100g, 120g, 60g" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Código / SKU</label>
+            <input 
+              type="text" 
+              id="edit-prod-code" 
+              value="${p.code || p.sku || ''}" 
+              placeholder="Ex: PAP-ORG-01" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Código de Barras (EAN)</label>
+            <input 
+              type="text" 
+              id="edit-prod-ean" 
+              value="${p.ean || ''}" 
+              placeholder="Ex: 7898994908722" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- SEÇÃO: DESCRIÇÃO -->
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1.5">Descrição do Produto (Aparece no modal de detalhes na loja)</label>
+          <textarea 
+            id="edit-prod-desc" 
+            rows="3" 
+            placeholder="Informações sobre ingredientes, modo de servir, conservação..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs leading-relaxed focus:ring-2 focus:ring-brand-500 focus:outline-none">${p.description || ''}</textarea>
+        </div>
+
+        <!-- SEÇÃO: STATUS & SELOS DESTAQUE -->
+        <div class="space-y-2">
+          <span class="block text-[10px] text-slate-400 uppercase font-bold">Status e Marcadores de Destaque</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="edit-prod-active" ${p.active !== false ? 'checked' : ''} class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">Ativo na Loja Pública</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o item no catálogo para os clientes comprarem</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="edit-prod-ready" ${p.readyDelivery === true ? 'checked' : ''} class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">⚡ Pronta Entrega</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o selo de envio imediato ao invés de sob encomenda</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="edit-prod-featured" ${p.featured === true ? 'checked' : ''} class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">⭐ Destaque na Vitrine</span>
+                <span class="text-[10px] text-slate-400 block">Prioriza o produto no topo das buscas e na home</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="edit-prod-organic" ${p.organic === true ? 'checked' : ''} class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">🌿 100% Orgânico</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o selo de certificação orgânica infantil</span>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RODAPÉ COM AÇÕES -->
+      <div class="flex items-center justify-end gap-3 p-4 border-t border-slate-800 bg-slate-900/90 flex-shrink-0">
+        <button 
+          onclick="closeProductModal()" 
+          class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">
+          Cancelar
+        </button>
+        <button 
+          onclick="handleEditProductSubmit('${p.id}')" 
+          class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span>Salvar Alterações</span>
+        </button>
+      </div>
+
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeProductModal(); });
+  document.body.appendChild(overlay);
+}
+
+function handleEditProductSubmit(productId) {
+  const p = window.appState.products.find(x => x.id === productId);
+  if (!p) return;
+
+  const name = document.getElementById('edit-prod-name')?.value.trim();
+  if (!name) {
+    showToast("O nome do produto é obrigatório.", "warning");
+    return;
+  }
+
+  const image = document.getElementById('edit-prod-image')?.value.trim() || p.image;
+  const priceVal = document.getElementById('edit-prod-price')?.value;
+  const price = priceVal !== "" && !isNaN(priceVal) && parseFloat(priceVal) > 0 ? parseFloat(priceVal) : null;
+  const costVal = document.getElementById('edit-prod-cost')?.value;
+  const costPrice = costVal !== "" && !isNaN(costVal) ? parseFloat(costVal) : (p.costPrice || 0);
+  const stock = parseInt(document.getElementById('edit-prod-stock')?.value) || 0;
+  const minStock = parseInt(document.getElementById('edit-prod-min-stock')?.value) || (p.minStock || 2);
+  const category = document.getElementById('edit-prod-category')?.value || p.category;
+  const subcategory = document.getElementById('edit-prod-subcategory')?.value.trim() || p.subcategory || '';
+  const age = document.getElementById('edit-prod-age')?.value.trim() || p.age || '';
+  const weight = document.getElementById('edit-prod-weight')?.value.trim() || p.weight || '';
+  const code = document.getElementById('edit-prod-code')?.value.trim() || p.code || '';
+  const ean = document.getElementById('edit-prod-ean')?.value.trim() || p.ean || '';
+  const description = document.getElementById('edit-prod-desc')?.value.trim() || '';
+  const active = document.getElementById('edit-prod-active')?.checked ?? p.active;
+  const readyDelivery = document.getElementById('edit-prod-ready')?.checked ?? p.readyDelivery;
+  const featured = document.getElementById('edit-prod-featured')?.checked ?? p.featured;
+  const organic = document.getElementById('edit-prod-organic')?.checked ?? p.organic;
+
+  const data = {
+    name,
+    image,
+    price,
+    costPrice,
+    stock,
+    minStock,
+    category,
+    subcategory,
+    age,
+    weight,
+    code,
+    sku: code || p.sku,
+    ean,
+    description,
+    active,
+    readyDelivery,
+    featured,
+    organic,
+  };
+
+  closeProductModal();
+  window.appState.updateProduct(productId, data);
+}
+
 // -------------------------------------------------------------
 // TAB 3: GESTOR RÁPIDO DE PREÇOS E VITRINE (SOLICITADO PELO USUÁRIO)
 // -------------------------------------------------------------
@@ -4476,7 +4812,7 @@ function renderAdminPricesTab(state) {
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-black text-white font-heading">Gestor de Preços e Vitrine</h1>
-          <p class="text-xs sm:text-sm text-slate-400 mt-1">Altere o preço unitário (Un) na hora e organize as categorias do catálogo.</p>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">Altere preços, estoque, fotos, nomes e status de cada produto na vitrine Papapá.</p>
         </div>
         <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
           <i data-lucide="check-circle" class="w-4 h-4"></i> Salvamento Instantâneo
@@ -4511,7 +4847,7 @@ function renderAdminPricesTab(state) {
       <!-- TABELA DE PRECIFICAÇÃO E PRODUTOS -->
       <div class="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
+          <table class="w-full text-left text-xs text-slate-300 min-w-[980px]">
             <thead class="bg-slate-800/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider">
               <tr>
                 <th class="p-3.5">Foto</th>
@@ -4521,20 +4857,29 @@ function renderAdminPricesTab(state) {
                 <th class="p-3.5">Preço Unitário (Un)</th>
                 <th class="p-3.5">Pronta Entrega</th>
                 <th class="p-3.5">Status na Loja</th>
+                <th class="p-3.5 text-center">Ações</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
               ${productsList.map(p => `
                 <tr class="hover:bg-slate-800/40 transition-colors">
-                  <!-- FOTO -->
+                  <!-- FOTO (CLICÁVEL PARA EDITAR) -->
                   <td class="p-3.5">
-                    <img src="${p.image}" class="w-12 h-12 rounded-xl object-contain bg-slate-800 p-1 border border-slate-700/50">
+                    <button type="button" onclick="openEditProductModal('${p.id}')" class="relative group block rounded-xl overflow-hidden focus:outline-none" title="Clique para editar este produto">
+                      <img src="${p.image}" class="w-12 h-12 rounded-xl object-contain bg-slate-800 p-1 border border-slate-700/50 group-hover:border-brand-500 transition-colors" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
+                      <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </div>
+                    </button>
                   </td>
 
-                  <!-- NOME & DETALHES -->
+                  <!-- NOME & DETALHES (CLICÁVEL PARA EDITAR) -->
                   <td class="p-3.5 max-w-xs">
-                    <span class="font-bold text-white block text-sm leading-snug">${p.name}</span>
-                    <span class="text-[10px] text-slate-400 font-mono block mt-0.5">Cód: ${p.code || p.sku} | Faixa: ${p.age}</span>
+                    <button type="button" onclick="openEditProductModal('${p.id}')" class="text-left font-bold text-white hover:text-brand-400 block text-sm leading-snug transition-colors group flex items-start gap-1" title="Clique para editar detalhes">
+                      <span>${p.name}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-500 group-hover:text-brand-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </button>
+                    <span class="text-[10px] text-slate-400 font-mono block mt-0.5">Cód: ${p.code || p.sku || 'S/C'} | Faixa: ${p.age || '-'} ${p.weight ? ' | ' + p.weight : ''}</span>
                   </td>
 
                   <!-- CATEGORIA EDITÁVEL -->
@@ -4569,8 +4914,8 @@ function renderAdminPricesTab(state) {
                         <input 
                           type="number" 
                           step="0.01" 
-                          min="0"
-                          placeholder="0,00"
+                          min="0" 
+                          placeholder="0,00" 
                           value="${p.price !== null ? p.price : ''}" 
                           id="price-input-${p.id}"
                           class="w-24 pl-8 pr-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-brand-400 font-mono font-extrabold text-sm focus:ring-2 focus:ring-brand-500 focus:bg-slate-700">
@@ -4599,6 +4944,18 @@ function renderAdminPricesTab(state) {
                       onclick="window.appState.toggleProductActive('${p.id}')"
                       class="px-3 py-1 rounded-full text-xs font-bold transition-colors ${p.active ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-500 border border-slate-700'}">
                       ${p.active ? 'Ativo na Loja' : 'Pausado'}
+                    </button>
+                  </td>
+
+                  <!-- AÇÕES: EDITAR COMPLETO -->
+                  <td class="p-3.5 text-center">
+                    <button 
+                      type="button"
+                      onclick="openEditProductModal('${p.id}')"
+                      class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-brand-600 text-slate-300 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm mx-auto group"
+                      title="Editar Nome, Foto, Preços e Status">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      <span>Editar</span>
                     </button>
                   </td>
                 </tr>
@@ -4810,6 +5167,7 @@ function renderAdminInventoryTab(state) {
                 <th class="p-3.5">Estoque Atual</th>
                 <th class="p-3.5">Estoque Mínimo</th>
                 <th class="p-3.5">Status</th>
+                <th class="p-3.5 text-center">Ações</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
@@ -4822,11 +5180,23 @@ function renderAdminInventoryTab(state) {
                 }
                 return `
                   <tr class="hover:bg-slate-800/40">
-                    <td class="p-3.5 font-bold text-white">${p.name}</td>
+                    <td class="p-3.5 font-bold text-white">
+                      <button type="button" onclick="openEditProductModal('${p.id}')" class="text-left hover:text-brand-400 transition-colors" title="Clique para editar">
+                        ${p.name}
+                      </button>
+                    </td>
                     <td class="p-3.5 text-slate-400">${p.category}</td>
                     <td class="p-3.5 font-mono font-bold text-sm">${p.stock} un</td>
                     <td class="p-3.5 font-mono text-slate-400">${p.minStock} un</td>
                     <td class="p-3.5">${statusBadge}</td>
+                    <td class="p-3.5 text-center">
+                      <button 
+                        type="button" 
+                        onclick="openEditProductModal('${p.id}')" 
+                        class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-brand-600 text-slate-300 hover:text-white font-bold text-xs transition-colors shadow-sm">
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 `;
               }).join('')}
