@@ -1570,6 +1570,58 @@ class AppState {
     showToast(`Produto "${prod.name}" atualizado com sucesso!`, "success");
   }
 
+  addProduct(productData) {
+    const slug = (productData.name || 'produto')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const newId = 'p_' + slug + '_' + Math.floor(100 + Math.random() * 900);
+    const newProduct = {
+      id: newId,
+      name: productData.name,
+      category: productData.category || "Papinhas",
+      subcategory: productData.subcategory || "",
+      age: productData.age || "+6m",
+      price: productData.price !== undefined && productData.price !== null && productData.price !== '' ? parseFloat(productData.price) : null,
+      costPrice: productData.costPrice ? parseFloat(productData.costPrice) : 0,
+      stock: productData.stock !== undefined ? parseInt(productData.stock) : 10,
+      minStock: productData.minStock ? parseInt(productData.minStock) : 2,
+      image: productData.image || "images/imagem%20logo/logo%20cajuzinho.jpeg",
+      sku: productData.sku || productData.code || ("PAP-" + Math.floor(100 + Math.random() * 900)),
+      ean: productData.ean || "",
+      code: productData.code || "",
+      weight: productData.weight || "",
+      organic: productData.organic === true,
+      active: productData.active !== false,
+      featured: productData.featured === true,
+      salesCount: 0,
+      description: productData.description || "",
+      readyDelivery: productData.readyDelivery === true
+    };
+    this.products.unshift(newProduct);
+    this.saveState();
+    this.notify();
+    if (typeof upsertProductToDb === 'function') upsertProductToDb(newProduct);
+    showToast(`Produto "${newProduct.name}" cadastrado com sucesso!`, "success");
+    return newProduct;
+  }
+
+  deleteProduct(productId) {
+    const prod = this.products.find(p => p.id === productId);
+    if (!prod) return;
+    if (!confirm(`Excluir permanentemente o produto "${prod.name}"? Esta ação não pode ser desfeita.`)) return;
+    this.products = this.products.filter(p => p.id !== productId);
+    this.saveState();
+    this.notify();
+    try {
+      if (typeof sbClient !== 'undefined' && sbClient) {
+        sbClient.from('products').delete().eq('id', productId).then(() => {}).catch(() => {});
+      }
+    } catch(e) {}
+    showToast(`Produto "${prod.name}" removido com sucesso.`, "info");
+  }
+
   recordStockMovement(productId, type, quantity, reason = "") {
     const prod = this.products.find(p => p.id === productId);
     if (!prod) return;
@@ -4908,6 +4960,263 @@ function handleEditProductSubmit(productId) {
 }
 
 // -------------------------------------------------------------
+// CRIAR NOVO PRODUTO — MODAL E HANDLERS
+// -------------------------------------------------------------
+
+async function handleCreateProductImageFileSelect(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const statusEl = document.getElementById('create-prod-upload-status');
+  if (statusEl) statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">Otimizando imagem em HD...</span>';
+  try {
+    const result = await processImageFile(file, 1000, 0.88);
+    const imgPreview = document.getElementById('create-prod-preview');
+    if (imgPreview) imgPreview.src = result.dataUrl;
+    const inputImage = document.getElementById('create-prod-image');
+    if (inputImage) inputImage.value = result.dataUrl;
+    if (statusEl) statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Imagem HD pronta (${result.sizeKb} KB)</span>`;
+    showToast(`Imagem "${file.name}" carregada em alta definição!`, "success");
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-rose-400 font-bold">Falha no processamento</span>';
+    showToast(err.message || "Erro ao processar imagem.", "error");
+  }
+}
+
+function updateCreateProdPreview(url) {
+  const img = document.getElementById('create-prod-preview');
+  if (img) img.src = url.trim() || 'images/imagem%20logo/logo%20cajuzinho.jpeg';
+}
+
+function openCreateProductModal() {
+  closeProductModal();
+  const categories = ["Papinhas", "Snacks", "Cereais", "Massas", "Bebidas", "Acessórios"];
+  const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'product-edit-modal';
+  overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in';
+  overlay.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden" onclick="event.stopPropagation()">
+
+      <!-- CABEÇALHO -->
+      <div class="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/90 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-800/60 flex items-center justify-center text-emerald-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </div>
+          <div>
+            <h2 class="text-white font-black text-lg font-heading">Cadastrar Novo Produto</h2>
+            <p class="text-slate-400 text-xs mt-0.5">Preencha os campos abaixo e clique em Cadastrar</p>
+          </div>
+        </div>
+        <button onclick="closeProductModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- CORPO DO FORMULÁRIO -->
+      <div class="p-5 sm:p-6 space-y-5 overflow-y-auto">
+
+        <!-- SEÇÃO: FOTO & NOME -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div class="sm:col-span-1 flex flex-col items-center">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-2 self-start">Foto do Produto (HD)</label>
+            <div class="w-32 h-32 rounded-2xl overflow-hidden bg-slate-900 border-2 border-dashed border-slate-600 p-2 flex items-center justify-center relative shadow-inner">
+              <img id="create-prod-preview" src="images/imagem%20logo/logo%20cajuzinho.jpeg" alt="Preview" class="w-full h-full object-contain" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
+              <div class="absolute bottom-1 right-1 bg-black/75 px-1.5 py-0.5 rounded text-[9px] text-brand-400 font-mono font-black">HD</div>
+            </div>
+            <span id="create-prod-upload-status" class="text-[10px] text-slate-400 mt-2 text-center">Nenhuma imagem selecionada</span>
+          </div>
+
+          <div class="sm:col-span-2 space-y-3">
+            <div>
+              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1.5">Subir Foto do Computador / Celular</label>
+              <div class="flex items-center gap-2">
+                <label for="create-prod-file-input" class="cursor-pointer flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-md shadow-brand-600/25 transition-all flex items-center justify-center gap-2 active:scale-95">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  <span>Escolher Imagem (PNG, JPG, WEBP)</span>
+                </label>
+                <input type="file" id="create-prod-file-input" accept="image/*" class="hidden" onchange="handleCreateProductImageFileSelect(event)">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">A foto é processada em alta definição e salva diretamente no banco de dados.</p>
+            </div>
+
+            <div>
+              <details class="text-[11px] text-slate-400 group">
+                <summary class="cursor-pointer hover:text-white transition-colors text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+                  + Ou usar caminho / link manual
+                </summary>
+                <div class="mt-1.5">
+                  <input
+                    type="text"
+                    id="create-prod-image"
+                    placeholder="Ex: images/products/produto.jpg ou URL https://..."
+                    oninput="updateCreateProdPreview(this.value)"
+                    class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+              </details>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome Completo do Produto *</label>
+              <input
+                type="text"
+                id="create-prod-name"
+                required
+                placeholder="Ex: Papinha Orgânica Maçã e Ameixa 100g"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: PREÇOS & ESTOQUE -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <label class="block text-[10px] text-brand-400 uppercase font-bold mb-1">Preço Venda (R$)</label>
+            <input type="number" step="0.01" min="0" id="create-prod-price" placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-brand-500/40 text-brand-400 font-mono font-black text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Vazio = Sob Consulta</span>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Preço Custo (R$)</label>
+            <input type="number" step="0.01" min="0" id="create-prod-cost" placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 font-mono text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Para margem de lucro</span>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Estoque Atual (Un)</label>
+            <input type="number" min="0" id="create-prod-stock" value="10" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Saldo disponível</span>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Estoque Mínimo</label>
+            <input type="number" min="0" id="create-prod-min-stock" value="2" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <span class="text-[9px] text-slate-500 block mt-0.5">Alerta de reposição</span>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: CATEGORIZAÇÃO & CARACTERÍSTICAS -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Categoria Principal</label>
+            <select id="create-prod-category" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-500">
+              ${categoryOptions}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Subcategoria</label>
+            <input type="text" id="create-prod-subcategory" placeholder="Ex: Papinhas Salgadas" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Faixa Etária</label>
+            <input type="text" id="create-prod-age" placeholder="Ex: +6m, +8m, +12m" value="+6m" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Peso / Volume</label>
+            <input type="text" id="create-prod-weight" placeholder="Ex: 100g, 120g, 60g" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Código / SKU</label>
+            <input type="text" id="create-prod-code" placeholder="Ex: PAP-ORG-01" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Código de Barras (EAN)</label>
+            <input type="text" id="create-prod-ean" placeholder="Ex: 7898994908722" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- SEÇÃO: DESCRIÇÃO -->
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1.5">Descrição do Produto</label>
+          <textarea id="create-prod-desc" rows="3" placeholder="Informações sobre ingredientes, modo de servir, conservação..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs leading-relaxed focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+        </div>
+
+        <!-- SEÇÃO: STATUS & SELOS -->
+        <div class="space-y-2">
+          <span class="block text-[10px] text-slate-400 uppercase font-bold">Status e Marcadores de Destaque</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="create-prod-active" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">Ativo na Loja Pública</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o item no catálogo para os clientes comprarem</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="create-prod-ready" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">⚡ Pronta Entrega</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o selo de envio imediato ao invés de sob encomenda</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="create-prod-featured" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">⭐ Destaque na Vitrine</span>
+                <span class="text-[10px] text-slate-400 block">Prioriza o produto no topo das buscas e na home</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-colors">
+              <input type="checkbox" id="create-prod-organic" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 bg-slate-700 border-slate-600">
+              <div>
+                <span class="text-xs font-bold text-white block">🌿 100% Orgânico</span>
+                <span class="text-[10px] text-slate-400 block">Exibe o selo de certificação orgânica infantil</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RODAPÉ COM AÇÕES -->
+      <div class="flex items-center justify-end gap-3 p-4 border-t border-slate-800 bg-slate-900/90 flex-shrink-0">
+        <button onclick="closeProductModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">
+          Cancelar
+        </button>
+        <button onclick="handleCreateProductSubmit()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>Cadastrar Produto</span>
+        </button>
+      </div>
+
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeProductModal(); });
+  document.body.appendChild(overlay);
+}
+
+function handleCreateProductSubmit() {
+  const name = document.getElementById('create-prod-name')?.value.trim();
+  if (!name) {
+    showToast("O nome do produto é obrigatório.", "warning");
+    document.getElementById('create-prod-name')?.focus();
+    return;
+  }
+
+  const image = document.getElementById('create-prod-image')?.value.trim() || '';
+  const priceVal = document.getElementById('create-prod-price')?.value;
+  const price = priceVal !== '' && !isNaN(priceVal) ? parseFloat(priceVal) : null;
+  const costVal = document.getElementById('create-prod-cost')?.value;
+  const costPrice = costVal !== '' && !isNaN(costVal) ? parseFloat(costVal) : 0;
+  const stock = parseInt(document.getElementById('create-prod-stock')?.value) || 0;
+  const minStock = parseInt(document.getElementById('create-prod-min-stock')?.value) || 2;
+  const category = document.getElementById('create-prod-category')?.value || 'Papinhas';
+  const subcategory = document.getElementById('create-prod-subcategory')?.value.trim() || '';
+  const age = document.getElementById('create-prod-age')?.value.trim() || '+6m';
+  const weight = document.getElementById('create-prod-weight')?.value.trim() || '';
+  const code = document.getElementById('create-prod-code')?.value.trim() || '';
+  const ean = document.getElementById('create-prod-ean')?.value.trim() || '';
+  const description = document.getElementById('create-prod-desc')?.value.trim() || '';
+  const active = document.getElementById('create-prod-active')?.checked ?? true;
+  const readyDelivery = document.getElementById('create-prod-ready')?.checked ?? false;
+  const featured = document.getElementById('create-prod-featured')?.checked ?? false;
+  const organic = document.getElementById('create-prod-organic')?.checked ?? false;
+
+  const data = { name, image, price, costPrice, stock, minStock, category, subcategory, age, weight, code, ean, description, active, readyDelivery, featured, organic };
+
+  closeProductModal();
+  window.appState.addProduct(data);
+}
+
+// -------------------------------------------------------------
 // TAB 3: GESTOR RÁPIDO DE PREÇOS E VITRINE (SOLICITADO PELO USUÁRIO)
 // -------------------------------------------------------------
 
@@ -4931,8 +5240,17 @@ function renderAdminPricesTab(state) {
           <h1 class="text-2xl sm:text-3xl font-black text-white font-heading">Gestor de Preços e Vitrine</h1>
           <p class="text-xs sm:text-sm text-slate-400 mt-1">Altere preços, estoque, fotos, nomes e status de cada produto na vitrine Papapá.</p>
         </div>
-        <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-          <i data-lucide="check-circle" class="w-4 h-4"></i> Salvamento Instantâneo
+        <div class="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onclick="openCreateProductModal()"
+            class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2 active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>+ Cadastrar Novo Produto</span>
+          </button>
+          <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Salvamento Instantâneo
+          </div>
         </div>
       </div>
 
@@ -5064,16 +5382,26 @@ function renderAdminPricesTab(state) {
                     </button>
                   </td>
 
-                  <!-- AÇÕES: EDITAR COMPLETO -->
+                  <!-- AÇÕES: EDITAR + EXCLUIR -->
                   <td class="p-3.5 text-center">
-                    <button 
-                      type="button"
-                      onclick="openEditProductModal('${p.id}')"
-                      class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-brand-600 text-slate-300 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm mx-auto group"
-                      title="Editar Nome, Foto, Preços e Status">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      <span>Editar</span>
-                    </button>
+                    <div class="flex flex-col items-center gap-1.5">
+                      <button 
+                        type="button"
+                        onclick="openEditProductModal('${p.id}')"
+                        class="w-full px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-brand-600 text-slate-300 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm group"
+                        title="Editar Nome, Foto, Preços e Status">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-brand-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <span>Editar</span>
+                      </button>
+                      <button 
+                        type="button"
+                        onclick="window.appState.deleteProduct('${p.id}')"
+                        class="w-full px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-700 text-slate-400 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm group"
+                        title="Excluir produto permanentemente">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-rose-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <span>Excluir</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               `).join('')}
