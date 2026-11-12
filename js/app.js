@@ -2335,7 +2335,6 @@ function renderStoreHeader(state) {
             </div>
             <div>
               <span class="text-2xl font-extrabold tracking-tight font-heading text-slate-900 block leading-tight">CAJUZINHO</span>
-              <span class="text-[11px] font-semibold tracking-wider text-brand-600 uppercase block -mt-1">Distribuidora Papapá</span>
             </div>
           </div>
 
@@ -2345,7 +2344,6 @@ function renderStoreHeader(state) {
             <a href="#kits" class="hover:text-brand-600 transition-colors flex items-center gap-1.5 text-accent-warm font-semibold">
               <i data-lucide="flame" class="w-4 h-4"></i> Kits Promocionais
             </a>
-            <a href="#revenda" class="hover:text-brand-600 transition-colors">Quero Revender</a>
           </nav>
 
           <!-- AÇÕES DO TOPO (BUSCA & CARRINHO) -->
@@ -2388,29 +2386,16 @@ function renderStoreHero(state) {
           
           <!-- TEXTO & CTAs -->
           <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-100/70 text-brand-800 text-xs font-semibold uppercase tracking-wider border border-brand-200">
-              <i data-lucide="shield-check" class="w-4 h-4 text-brand-600"></i> Distribuidora Autorizada Papapá
-            </div>
-
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
               Papapá mais perto <br class="hidden sm:inline">
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 via-brand-500 to-accent-warm">de você.</span>
             </h1>
 
-            <p class="text-lg sm:text-xl text-slate-600 max-w-2xl font-normal leading-relaxed">
-              ${state.settings.subheading}
-            </p>
-
             <!-- AÇÕES DE CONVERSÃO -->
-            <div class="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+            <div class="flex flex-col sm:flex-row gap-4 pt-2 justify-center lg:justify-start">
               <a href="#catalogo" class="px-8 py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base shadow-xl shadow-brand-500/25 transition-all flex items-center justify-center gap-3 group active:scale-95">
                 <span>COMPRAR AGORA</span>
                 <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
-              </a>
-
-              <a href="#revenda" class="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-base border border-slate-300/80 shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95">
-                <i data-lucide="store" class="w-5 h-5 text-brand-600"></i>
-                <span>QUERO REVENDER</span>
               </a>
             </div>
 
