@@ -1907,27 +1907,38 @@ async function syncFromDatabase() {
 /** Sincroniza um produto com o Supabase (fire-and-forget) */
 async function upsertProductToDb(product) {
   if (!sbClient || !product) return;
+  const payload = {
+    id: product.id,
+    name: product.name,
+    category: product.category,
+    subcategory: product.subcategory || '',
+    age: product.age || '',
+    price: product.price,
+    cost_price: product.costPrice || 0,
+    stock: product.stock,
+    min_stock: product.minStock || 2,
+    ready_delivery: product.readyDelivery === true,
+    active: product.active !== false,
+    featured: product.featured === true,
+    description: product.description || '',
+    image: product.image || '',
+    icon: product.icon || 'package',
+    tags: product.tags || [],
+    weight: product.weight || '',
+  };
   try {
-    const { error } = await sbClient.from('products').upsert({
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      subcategory: product.subcategory || '',
-      age: product.age || '',
-      price: product.price,
-      cost_price: product.costPrice || 0,
-      stock: product.stock,
-      min_stock: product.minStock || 2,
-      ready_delivery: product.readyDelivery === true,
-      active: product.active !== false,
-      featured: product.featured === true,
-      description: product.description || '',
-      image: product.image || '',
-      icon: product.icon || 'package',
-      tags: product.tags || [],
-      weight: product.weight || '',
-    }, { onConflict: 'id' });
-    if (error) console.warn('[Supabase] upsertProduct error:', error.message);
+    // Tenta UPDATE primeiro (funciona com anon key sem INSERT policy)
+    const { data: existing } = await sbClient.from('products').select('id').eq('id', product.id).single();
+    if (existing) {
+      const { error } = await sbClient.from('products').update(payload).eq('id', product.id);
+      if (error) console.warn('[Supabase] updateProduct error:', error.message);
+      else console.log('[Supabase] Produto atualizado:', product.id);
+    } else {
+      // Produto novo — tenta INSERT
+      const { error } = await sbClient.from('products').insert(payload);
+      if (error) console.warn('[Supabase] insertProduct error:', error.message);
+      else console.log('[Supabase] Produto inserido:', product.id);
+    }
   } catch (e) {
     console.warn('[Supabase] upsertProduct exception:', e.message);
   }
