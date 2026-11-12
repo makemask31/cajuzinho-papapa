@@ -1665,13 +1665,37 @@ class AppState {
       badge: kitData.badge || "Kit Especial",
       description: kitData.description || "Combo criado sob medida pela Cajuzinho.",
       image: kitData.image || "images/products/hero_family.jpg",
-      items: kitData.items,
-      discountPercent: parseInt(kitData.discountPercent) || 10,
+      items: kitData.items || [],
+      discountPercent: parseFloat(kitData.discountPercent) || 10,
       active: true
     };
     this.kits.unshift(newKit);
     this.saveState();
+    this.notify();
+    if (typeof upsertKitToDb === 'function') upsertKitToDb(newKit);
     showToast(`Kit "${newKit.name}" criado e publicado com sucesso!`, "success");
+    return newKit;
+  }
+
+  toggleKitActive(kitId) {
+    const kit = this.kits.find(k => k.id === kitId);
+    if (!kit) return;
+    kit.active = !kit.active;
+    this.saveState();
+    this.notify();
+    if (typeof upsertKitToDb === 'function') upsertKitToDb(kit);
+    showToast(`Kit "${kit.name}" ${kit.active ? 'ativado' : 'desativado'} na loja.`, "info");
+  }
+
+  deleteKit(kitId) {
+    const kit = this.kits.find(k => k.id === kitId);
+    if (!kit) return;
+    if (!confirm(`Excluir permanentemente o kit "${kit.name}"? Esta ação não pode ser desfeita.`)) return;
+    this.kits = this.kits.filter(k => k.id !== kitId);
+    this.saveState();
+    this.notify();
+    if (typeof deleteKitFromDb === 'function') deleteKitFromDb(kitId);
+    showToast(`Kit "${kit.name}" removido com sucesso.`, "info");
   }
 
   updateOrderStatus(orderId, newStatus) {
@@ -1823,12 +1847,12 @@ function dbRowToKit(row) {
     id: row.id,
     name: row.name,
     description: row.description || '',
-    price: parseFloat(row.price) || 0,
-    originalPrice: parseFloat(row.original_price) || 0,
-    items: row.items || [],
-    badge: row.badge || '',
-    icon: row.icon || 'package',
-    stock: parseInt(row.stock) || 0,
+    badge: row.badge || 'Kit Especial',
+    image: row.image || 'images/products/hero_family.jpg',
+    items: Array.isArray(row.items) ? row.items : [],
+    discountPercent: row.discount_percent !== undefined && row.discount_percent !== null ? parseFloat(row.discount_percent) : 10,
+    active: row.active !== false,
+    stock: parseInt(row.stock) || 10,
   };
 }
 
@@ -1953,6 +1977,47 @@ async function upsertProductToDb(product) {
     }
   } catch (e) {
     console.error('[Supabase] upsertProduct exceção:', e.message);
+  }
+}
+
+/** Sincroniza um kit com o Supabase (fire-and-forget) */
+async function upsertKitToDb(kit) {
+  if (!sbClient || !kit || !kit.id) return;
+  const payload = {
+    id: kit.id,
+    name: kit.name,
+    badge: kit.badge || 'Kit Especial',
+    description: kit.description || '',
+    image: kit.image || 'images/products/hero_family.jpg',
+    items: Array.isArray(kit.items) ? kit.items : [],
+    discount_percent: parseFloat(kit.discountPercent) || 10,
+    active: kit.active !== false
+  };
+  try {
+    const { data: existing } = await sbClient.from('kits').select('id').eq('id', kit.id).maybeSingle();
+    if (existing) {
+      const { error: updErr } = await sbClient.from('kits').update(payload).eq('id', kit.id);
+      if (updErr) console.error('[Supabase] Falha ao atualizar kit:', updErr.message);
+      else console.log('[Supabase] Kit atualizado no banco:', kit.id);
+    } else {
+      const { error: insErr } = await sbClient.from('kits').insert(payload);
+      if (insErr) console.error('[Supabase] Falha ao inserir kit:', insErr.message);
+      else console.log('[Supabase] Kit novo inserido no banco:', kit.id);
+    }
+  } catch (e) {
+    console.error('[Supabase] upsertKit exceção:', e.message);
+  }
+}
+
+/** Remove um kit do Supabase */
+async function deleteKitFromDb(kitId) {
+  if (!sbClient || !kitId) return;
+  try {
+    const { error } = await sbClient.from('kits').delete().eq('id', kitId);
+    if (error) console.error('[Supabase] Falha ao excluir kit:', error.message);
+    else console.log('[Supabase] Kit excluído do banco:', kitId);
+  } catch (e) {
+    console.error('[Supabase] deleteKit exceção:', e.message);
   }
 }
 
@@ -2454,10 +2519,13 @@ function renderTrustPillars(state) {
 }
 
 function renderKitsSection(state) {
-  const activeKits = state.kits.filter(k => k.active);
+  const kitsList = (state.kits && state.kits.length > 0) ? state.kits : INITIAL_KITS;
+  const activeKits = kitsList.filter(k => k.active !== false);
+
+  if (activeKits.length === 0) return '';
 
   return `
-    <section class="py-16 bg-gradient-to-b from-slate-50 via-brand-50/30 to-white">
+    <section id="kits" class="py-16 bg-gradient-to-b from-slate-50 via-brand-50/30 to-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
@@ -2484,28 +2552,32 @@ function renderKitsSection(state) {
                 <!-- BADGE DO KIT -->
                 <div class="absolute top-5 right-5">
                   <span class="px-3 py-1 rounded-full bg-accent-warm text-white text-xs font-extrabold shadow-md shadow-accent-warm/30">
-                    ${kit.badge || `${kit.discountPercent}% OFF`}
+                    ${kit.badge || `${kit.discountPercent || 10}% OFF`}
                   </span>
                 </div>
 
                 <div>
                   <div class="h-44 rounded-2xl overflow-hidden mb-5 bg-slate-100 relative">
-                    <img src="${kit.image}" alt="${kit.name}" class="w-full h-full object-cover">
+                    <img src="${kit.image || 'images/products/hero_family.jpg'}" alt="${kit.name}" class="w-full h-full object-cover" onerror="this.src='images/imagem%20logo/logo%20cajuzinho.jpeg'">
                   </div>
 
                   <h3 class="text-xl font-bold text-slate-900 leading-snug">${kit.name}</h3>
-                  <p class="text-xs text-slate-500 mt-2 line-clamp-2">${kit.description}</p>
+                  <p class="text-xs text-slate-500 mt-2 line-clamp-2">${kit.description || ''}</p>
 
-                  <!-- ITENS INCLUÍDOS -->
+                  <!-- ITENS INCLUÍDOS COM PREÇOS ATUALIZADOS -->
                   <div class="mt-4 pt-4 border-t border-slate-100">
                     <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Itens Inclusos no Combo:</span>
                     <ul class="space-y-1.5 text-xs text-slate-600 font-medium">
-                      ${kit.items.map(it => `
-                        <li class="flex items-center gap-2">
-                          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-brand-600 flex-shrink-0"></i>
-                          <span>${it.qty}x ${it.name}</span>
-                        </li>
-                      `).join('')}
+                      ${(kit.items || []).map(it => {
+                        const prod = state.products.find(p => p.id === it.productId);
+                        const prodName = prod ? prod.name : it.name;
+                        return `
+                          <li class="flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-brand-600 flex-shrink-0"></i>
+                            <span>${it.qty || 1}x ${prodName}</span>
+                          </li>
+                        `;
+                      }).join('')}
                     </ul>
                   </div>
                 </div>
@@ -5480,13 +5552,14 @@ function saveInlinePrice(productId) {
 
 function renderAdminKitsTab(state) {
   const pricedProducts = state.products.filter(p => p.price !== null);
+  const kitsList = (state.kits && state.kits.length > 0) ? state.kits : INITIAL_KITS;
 
   return `
     <div class="space-y-8">
       
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-white font-heading">Montador de Kits Cajuzinho</h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">Crie combos com desconto automático para elevar o ticket médio e escoar produtos.</p>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Crie combos com desconto automático. Os preços dos itens são calculados em tempo real diretamente a partir do Gestor de Preços.</p>
       </div>
 
       <!-- FORMULÁRIO DE CRIAÇÃO DE NOVO KIT -->
@@ -5496,14 +5569,18 @@ function renderAdminKitsTab(state) {
         </h3>
 
         <form id="new-kit-form" onsubmit="handleCreateKitSubmit(event)" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div class="sm:col-span-2">
               <label class="block text-xs font-bold text-slate-300 mb-1">Nome do Kit *</label>
               <input type="text" name="kitName" required placeholder="Ex: Kit Primeiros Sabores + Brinde" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
             </div>
             <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1">Badge / Selo</label>
+              <input type="text" name="kitBadge" placeholder="Ex: Mais Vendido, Econômico" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+            <div>
               <label class="block text-xs font-bold text-slate-300 mb-1">Desconto do Kit (%) *</label>
-              <input type="number" name="kitDiscount" min="1" max="50" value="12" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+              <input type="number" name="kitDiscount" min="1" max="70" value="10" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-mono font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none">
             </div>
           </div>
 
@@ -5512,56 +5589,125 @@ function renderAdminKitsTab(state) {
             <input type="text" name="kitDesc" placeholder="Ex: Combinação perfeita para a semana de introdução alimentar..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
           </div>
 
-          <!-- SELEÇÃO DE PRODUTOS PARA COMPOR O KIT -->
+          <!-- SELEÇÃO DE PRODUTOS PARA COMPOR O KIT COM QUANTIDADE E PREÇO ATUAL -->
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-2">Selecione os Produtos Inclusos no Kit:</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto p-2 bg-slate-800/50 rounded-2xl border border-slate-800">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-bold text-slate-300">Selecione os Produtos Inclusos no Kit:</label>
+              <span class="text-[11px] text-slate-400">Preços puxados automaticamente do catálogo</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-2.5 bg-slate-800/50 rounded-2xl border border-slate-800">
               ${pricedProducts.map(p => `
-                <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-800 hover:bg-slate-700/80 cursor-pointer transition-colors text-xs text-slate-200">
-                  <input type="checkbox" name="selectedProducts" value="${p.id}" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500">
-                  <span class="truncate flex-1">${p.name}</span>
-                  <span class="font-mono text-brand-400 font-bold">${formatMoney(p.price)}</span>
-                </label>
+                <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 transition-colors text-xs text-slate-200">
+                  <label class="flex items-center gap-2 min-w-0 flex-1 cursor-pointer">
+                    <input type="checkbox" name="selectedProducts" value="${p.id}" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 flex-shrink-0">
+                    <span class="truncate font-medium">${p.name}</span>
+                  </label>
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="font-mono text-emerald-400 font-bold">${formatMoney(p.price)}</span>
+                    <div class="flex items-center gap-1 bg-slate-900 px-1.5 py-0.5 rounded-lg border border-slate-700">
+                      <span class="text-[10px] text-slate-400">Qtd:</span>
+                      <input type="number" min="1" max="20" value="1" data-prod-id="${p.id}" class="kit-prod-qty w-10 bg-transparent text-center font-mono text-white text-xs font-bold focus:outline-none">
+                    </div>
+                  </div>
+                </div>
               `).join('')}
             </div>
           </div>
 
-          <button type="submit" class="px-6 py-3 rounded-xl bg-accent-warm hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-accent-warm/25 transition-all flex items-center gap-2">
+          <button type="submit" class="px-6 py-3 rounded-xl bg-accent-warm hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-accent-warm/25 transition-all flex items-center gap-2 active:scale-95">
             <i data-lucide="check" class="w-4 h-4"></i>
             <span>SALVAR E PUBLICAR KIT NA LOJA</span>
           </button>
         </form>
       </div>
 
-      <!-- LISTA DE KITS EXISTENTES -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        ${state.kits.map(kit => {
-          const priceInfo = state.calculateKitPrice(kit);
-          return `
-            <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 flex flex-col justify-between">
-              <div>
-                <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-base font-bold text-white leading-snug">${kit.name}</h3>
-                  <span class="px-2 py-0.5 rounded-full bg-accent-warm/20 text-accent-warm text-[10px] font-bold">
-                    ${kit.discountPercent}% OFF
-                  </span>
-                </div>
-                <p class="text-xs text-slate-400 mb-4">${kit.description}</p>
-                <ul class="space-y-1 text-xs text-slate-300 font-medium">
-                  ${kit.items.map(it => `<li>• ${it.qty}x ${it.name}</li>`).join('')}
-                </ul>
-              </div>
+      <!-- LISTA DE KITS EXISTENTES COM PREÇOS EM TEMPO REAL -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-white">Kits Cadastrados (${kitsList.length})</h2>
+          <span class="text-xs text-slate-400">Total calculado dinamicamente com base nos produtos</span>
+        </div>
 
-              <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          ${kitsList.map(kit => {
+            const priceInfo = state.calculateKitPrice(kit);
+            return `
+              <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 flex flex-col justify-between shadow-lg">
                 <div>
-                  <span class="text-xs text-slate-500 line-through block">${formatMoney(priceInfo.rawTotal)}</span>
-                  <span class="text-xl font-extrabold text-white font-heading font-mono">${formatMoney(priceInfo.finalPrice)}</span>
+                  <div class="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 rounded-full bg-accent-warm/20 text-accent-warm text-[10px] font-bold">
+                          ${kit.badge || `${kit.discountPercent || 10}% OFF`}
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${kit.active !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                          ${kit.active !== false ? '● Ativo na Loja' : '○ Oculto'}
+                        </span>
+                      </div>
+                      <h3 class="text-base font-bold text-white leading-snug mt-1.5">${kit.name}</h3>
+                    </div>
+                  </div>
+
+                  <p class="text-xs text-slate-400 mb-4 line-clamp-2">${kit.description || ''}</p>
+
+                  <!-- ITENS DO COMBO COM PREÇOS PUXADOS DOS PRODUTOS -->
+                  <div>
+                    <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-2">Composição do Combo:</span>
+                    <ul class="space-y-1.5 text-xs text-slate-300">
+                      ${(kit.items || []).map(it => {
+                        const prod = state.products.find(p => p.id === it.productId);
+                        const prodName = prod ? prod.name : it.name;
+                        const currentPrice = prod && prod.price !== null ? prod.price : null;
+                        return `
+                          <li class="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
+                            <span class="truncate font-medium">• ${it.qty || 1}x ${prodName}</span>
+                            <span class="font-mono text-slate-300 font-bold flex-shrink-0">
+                              ${currentPrice !== null ? formatMoney(currentPrice * (it.qty || 1)) : '<span class="text-amber-400 text-[10px]">Sem preço</span>'}
+                            </span>
+                          </li>
+                        `;
+                      }).join('')}
+                    </ul>
+                  </div>
                 </div>
-                <span class="text-xs text-emerald-400 font-bold">Economia: ${formatMoney(priceInfo.discountValue)}</span>
+
+                <!-- TOTAIS E DESCONTO -->
+                <div class="mt-5 pt-4 border-t border-slate-800 space-y-1.5 text-xs">
+                  <div class="flex justify-between text-slate-400">
+                    <span>Soma avulsa:</span>
+                    <span class="font-mono line-through">${formatMoney(priceInfo.rawTotal)}</span>
+                  </div>
+                  <div class="flex justify-between text-emerald-400">
+                    <span>Desconto do combo (${kit.discountPercent || 10}%):</span>
+                    <span class="font-mono font-bold">- ${formatMoney(priceInfo.discountValue)}</span>
+                  </div>
+                  <div class="flex justify-between text-white font-extrabold text-sm pt-1.5 border-t border-slate-800/80">
+                    <span>Preço do Combo:</span>
+                    <span class="font-mono font-black text-amber-400 text-base">${formatMoney(priceInfo.finalPrice)}</span>
+                  </div>
+
+                  <!-- BOTÕES DE AÇÃO -->
+                  <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onclick="window.appState.toggleKitActive('${kit.id}')"
+                      class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${kit.active !== false ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/50'}">
+                      ${kit.active !== false ? 'Ocultar da Loja' : 'Ativar na Loja'}
+                    </button>
+                    <button
+                      type="button"
+                      onclick="window.appState.deleteKit('${kit.id}')"
+                      class="px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/40 text-xs font-bold transition-colors flex items-center gap-1 active:scale-95">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      <span>Excluir</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
-            </div>
-          `;
-        }).join('')}
+            `;
+          }).join('')}
+        </div>
       </div>
 
     </div>
@@ -5571,9 +5717,10 @@ function renderAdminKitsTab(state) {
 function handleCreateKitSubmit(event) {
   event.preventDefault();
   const form = event.target;
-  const name = form.kitName.value;
-  const discountPercent = form.kitDiscount.value;
-  const description = form.kitDesc.value;
+  const name = form.kitName.value.trim();
+  const badge = form.kitBadge?.value.trim() || "Kit Especial";
+  const discountPercent = parseFloat(form.kitDiscount.value) || 10;
+  const description = form.kitDesc.value.trim();
 
   const checkboxes = form.querySelectorAll('input[name="selectedProducts"]:checked');
   if (checkboxes.length === 0) {
@@ -5585,9 +5732,11 @@ function handleCreateKitSubmit(event) {
   checkboxes.forEach(cb => {
     const prod = window.appState.products.find(p => p.id === cb.value);
     if (prod) {
+      const qtyInput = form.querySelector(`.kit-prod-qty[data-prod-id="${prod.id}"]`);
+      const qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
       items.push({
         productId: prod.id,
-        qty: 1,
+        qty: qty,
         name: prod.name
       });
     }
@@ -5595,6 +5744,7 @@ function handleCreateKitSubmit(event) {
 
   window.appState.addCustomKit({
     name,
+    badge,
     discountPercent,
     description,
     items
