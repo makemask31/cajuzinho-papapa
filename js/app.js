@@ -1305,7 +1305,8 @@ class AppState {
       this.settings.shippingCities = JSON.parse(JSON.stringify(INITIAL_SETTINGS.shippingCities));
     }
 
-    this.kits = JSON.parse(localStorage.getItem("cajuzinho_kits")) || INITIAL_KITS;
+    const savedKits = localStorage.getItem("cajuzinho_kits");
+    this.kits = savedKits !== null ? JSON.parse(savedKits) : INITIAL_KITS;
     this.coupons = JSON.parse(localStorage.getItem("cajuzinho_coupons")) || INITIAL_COUPONS;
     const storedOrders = JSON.parse(localStorage.getItem("cajuzinho_orders"));
     this.orders = (storedOrders && Array.isArray(storedOrders) && storedOrders.length > 0)
@@ -1898,7 +1899,7 @@ async function syncFromDatabase() {
     const { data: kits, error: kErr } = await sbClient
       .from('kits').select('*').order('name');
     if (kErr) throw kErr;
-    if (kits && kits.length > 0) {
+    if (kits) {
       state.kits = kits.map(dbRowToKit);
       console.log('[Supabase] Loaded', state.kits.length, 'kits');
     }
@@ -2519,8 +2520,7 @@ function renderTrustPillars(state) {
 }
 
 function renderKitsSection(state) {
-  const kitsList = (state.kits && state.kits.length > 0) ? state.kits : INITIAL_KITS;
-  const activeKits = kitsList.filter(k => k.active !== false);
+  const activeKits = (state.kits || []).filter(k => k.active !== false);
 
   if (activeKits.length === 0) return '';
 
@@ -5552,7 +5552,7 @@ function saveInlinePrice(productId) {
 
 function renderAdminKitsTab(state) {
   const pricedProducts = state.products.filter(p => p.price !== null);
-  const kitsList = (state.kits && state.kits.length > 0) ? state.kits : INITIAL_KITS;
+  const kitsList = state.kits || [];
 
   return `
     <div class="space-y-8">
@@ -5629,7 +5629,15 @@ function renderAdminKitsTab(state) {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          ${kitsList.map(kit => {
+          ${kitsList.length === 0 ? `
+            <div class="col-span-full p-10 rounded-3xl bg-slate-900 border border-slate-800 text-center">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center">
+                <i data-lucide="package-open" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-white font-bold text-base">Nenhum kit cadastrado no momento</h3>
+              <p class="text-slate-400 text-xs mt-1 max-w-md mx-auto">Você pode criar combos exclusivos usando o formulário acima selecionando os produtos e o desconto desejado.</p>
+            </div>
+          ` : kitsList.map(kit => {
             const priceInfo = state.calculateKitPrice(kit);
             return `
               <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 flex flex-col justify-between shadow-lg">
