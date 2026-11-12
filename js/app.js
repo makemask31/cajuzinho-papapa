@@ -1544,6 +1544,8 @@ class AppState {
     if (prod) {
       prod.active = !prod.active;
       this.saveState();
+      this.notify();
+      if (typeof upsertProductToDb === 'function') upsertProductToDb(prod);
       showToast(`Produto "${prod.name}" ${prod.active ? 'ativado' : 'desativado'} na loja.`, "info");
     }
   }
@@ -1554,6 +1556,8 @@ class AppState {
       prod.category = newCategory;
       if (newSubcategory) prod.subcategory = newSubcategory;
       this.saveState();
+      this.notify();
+      if (typeof upsertProductToDb === 'function') upsertProductToDb(prod);
       showToast(`Categoria de "${prod.name}" alterada para ${newCategory}.`, "success");
     }
   }
@@ -1788,22 +1792,28 @@ function dbRowToProduct(row) {
   return {
     id: row.id,
     name: row.name,
-    category: row.category,
+    category: row.category || 'Papinhas',
     subcategory: row.subcategory || '',
-    age: row.age || '',
+    age: row.age || '+6m',
     // Preserva null para produtos sem preço ("Sob Consulta")
-    price: row.price !== null && row.price !== undefined ? parseFloat(row.price) : null,
-    costPrice: row.cost_price !== null && row.cost_price !== undefined ? parseFloat(row.cost_price) : null,
+    price: row.price !== null && row.price !== undefined && row.price !== '' ? parseFloat(row.price) : null,
+    costPrice: row.cost_price !== null && row.cost_price !== undefined && row.cost_price !== '' ? parseFloat(row.cost_price) : 0,
     stock: parseInt(row.stock) || 0,
     minStock: parseInt(row.min_stock) || 2,
     readyDelivery: row.ready_delivery === true,
     // Campo active: obrigatório para aparecer na loja
     active: row.active !== false,
+    featured: row.featured === true,
+    organic: row.organic === true,
+    sku: row.sku || '',
+    ean: row.ean || '',
+    code: row.code || '',
     description: row.description || '',
-    image: row.image || '',
-    icon: row.icon || 'package',
-    tags: row.tags || [],
-    weight: row.weight || '',
+    image: row.image || 'images/imagem%20logo/logo%20cajuzinho.jpeg',
+    salesCount: parseInt(row.sales_count) || 0,
+    icon: 'package',
+    tags: [],
+    weight: ''
   };
 }
 
@@ -1906,41 +1916,43 @@ async function syncFromDatabase() {
 
 /** Sincroniza um produto com o Supabase (fire-and-forget) */
 async function upsertProductToDb(product) {
-  if (!sbClient || !product) return;
+  if (!sbClient || !product || !product.id) return;
+  // Apenas colunas reais da tabela products do Supabase!
+  // Colunas icon, tags e weight NÃO existem no banco e causam rejeição se enviadas.
   const payload = {
     id: product.id,
     name: product.name,
-    category: product.category,
+    category: product.category || 'Papinhas',
     subcategory: product.subcategory || '',
-    age: product.age || '',
-    price: product.price,
-    cost_price: product.costPrice || 0,
-    stock: product.stock,
-    min_stock: product.minStock || 2,
+    age: product.age || '+6m',
+    price: product.price !== undefined && product.price !== null && product.price !== '' ? parseFloat(product.price) : null,
+    cost_price: product.costPrice !== undefined && product.costPrice !== null && product.costPrice !== '' ? parseFloat(product.costPrice) : 0,
+    stock: product.stock !== undefined && product.stock !== null ? parseInt(product.stock) : 0,
+    min_stock: product.minStock !== undefined && product.minStock !== null ? parseInt(product.minStock) : 2,
     ready_delivery: product.readyDelivery === true,
     active: product.active !== false,
     featured: product.featured === true,
+    organic: product.organic === true,
+    sku: product.sku || product.code || '',
+    ean: product.ean || '',
+    code: product.code || '',
     description: product.description || '',
     image: product.image || '',
-    icon: product.icon || 'package',
-    tags: product.tags || [],
-    weight: product.weight || '',
+    sales_count: parseInt(product.salesCount) || 0
   };
   try {
-    // Tenta UPDATE primeiro (funciona com anon key sem INSERT policy)
-    const { data: existing } = await sbClient.from('products').select('id').eq('id', product.id).single();
+    const { data: existing } = await sbClient.from('products').select('id').eq('id', product.id).maybeSingle();
     if (existing) {
-      const { error } = await sbClient.from('products').update(payload).eq('id', product.id);
-      if (error) console.warn('[Supabase] updateProduct error:', error.message);
-      else console.log('[Supabase] Produto atualizado:', product.id);
+      const { error: updErr } = await sbClient.from('products').update(payload).eq('id', product.id);
+      if (updErr) console.error('[Supabase] Falha ao atualizar produto:', updErr.message);
+      else console.log('[Supabase] Produto atualizado no banco:', product.id);
     } else {
-      // Produto novo — tenta INSERT
-      const { error } = await sbClient.from('products').insert(payload);
-      if (error) console.warn('[Supabase] insertProduct error:', error.message);
-      else console.log('[Supabase] Produto inserido:', product.id);
+      const { error: insErr } = await sbClient.from('products').insert(payload);
+      if (insErr) console.error('[Supabase] Falha ao cadastrar produto:', insErr.message);
+      else console.log('[Supabase] Novo produto cadastrado no banco:', product.id);
     }
   } catch (e) {
-    console.warn('[Supabase] upsertProduct exception:', e.message);
+    console.error('[Supabase] upsertProduct exceção:', e.message);
   }
 }
 
@@ -4656,6 +4668,7 @@ function openEditProductModal(productId) {
 
   const overlay = document.createElement('div');
   overlay.id = 'product-edit-modal';
+  overlay.dataset.productId = productId;
   overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in';
   overlay.innerHTML = `
     <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden" onclick="event.stopPropagation()">
