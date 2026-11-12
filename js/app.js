@@ -4557,27 +4557,52 @@ function processImageFile(file, maxWidth = 1000, quality = 0.88) {
   });
 }
 
+async function uploadImageToStorage(file, productId) {
+  // Faz upload da imagem para o Supabase Storage e retorna a URL pública
+  if (!sbClient) throw new Error("Supabase não disponível");
+  const ext = file.name.split('.').pop().toLowerCase().replace('jpg','jpeg');
+  const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const fileName = `${productId}_${Date.now()}.${ext === 'jpeg' ? 'jpg' : ext}`;
+  const { data, error } = await sbClient.storage
+    .from('Produtos')
+    .upload(fileName, file, { contentType: mimeType, upsert: true });
+  if (error) throw new Error(error.message);
+  const { data: urlData } = sbClient.storage.from('Produtos').getPublicUrl(fileName);
+  return urlData.publicUrl;
+}
+
 async function handleProductImageFileSelect(event) {
   const file = event.target.files?.[0];
   if (!file) return;
 
   const statusEl = document.getElementById('edit-prod-upload-status');
-  if (statusEl) {
-    statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">Otimizando imagem em HD...</span>';
-  }
+  if (statusEl) statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">⬆ Enviando imagem para o servidor...</span>';
 
   try {
-    const result = await processImageFile(file, 1000, 0.88);
-    const imgPreview = document.getElementById('edit-prod-preview');
-    if (imgPreview) imgPreview.src = result.dataUrl;
-
-    const inputImage = document.getElementById('edit-prod-image');
-    if (inputImage) inputImage.value = result.dataUrl;
-
-    if (statusEl) {
-      statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Imagem HD pronta (${result.sizeKb} KB)</span>`;
+    // Tenta upload direto pro Storage; fallback para base64 se falhar
+    let imageUrl;
+    const productId = document.getElementById('edit-prod-name')?.closest('[data-product-id]')?.dataset?.productId
+      || 'prod_' + Date.now();
+    if (sbClient) {
+      try {
+        imageUrl = await uploadImageToStorage(file, productId);
+        if (statusEl) statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✅ Imagem salva no servidor!</span>`;
+        showToast(`Imagem "${file.name}" enviada com sucesso!`, "success");
+      } catch(uploadErr) {
+        console.warn('[Storage] Upload falhou, usando base64:', uploadErr.message);
+        const result = await processImageFile(file, 1000, 0.88);
+        imageUrl = result.dataUrl;
+        if (statusEl) statusEl.innerHTML = `<span class="text-amber-400 font-bold">⚠ Imagem local (${result.sizeKb} KB) — Storage indisponível</span>`;
+      }
+    } else {
+      const result = await processImageFile(file, 1000, 0.88);
+      imageUrl = result.dataUrl;
+      if (statusEl) statusEl.innerHTML = `<span class="text-amber-400 font-bold">✓ Imagem local pronta (${result.sizeKb} KB)</span>`;
     }
-    showToast(`Imagem "${file.name}" carregada em alta definição! Salve as alterações para confirmar.`, "success");
+    const imgPreview = document.getElementById('edit-prod-preview');
+    if (imgPreview) imgPreview.src = imageUrl;
+    const inputImage = document.getElementById('edit-prod-image');
+    if (inputImage) inputImage.value = imageUrl;
   } catch (err) {
     if (statusEl) statusEl.innerHTML = '<span class="text-rose-400 font-bold">Falha no processamento</span>';
     showToast(err.message || "Erro ao processar imagem.", "error");
@@ -4945,15 +4970,30 @@ async function handleCreateProductImageFileSelect(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   const statusEl = document.getElementById('create-prod-upload-status');
-  if (statusEl) statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">Otimizando imagem em HD...</span>';
+  if (statusEl) statusEl.innerHTML = '<span class="text-amber-400 font-bold animate-pulse">⬆ Enviando imagem para o servidor...</span>';
   try {
-    const result = await processImageFile(file, 1000, 0.88);
+    let imageUrl;
+    const tempId = 'novo_' + Date.now();
+    if (sbClient) {
+      try {
+        imageUrl = await uploadImageToStorage(file, tempId);
+        if (statusEl) statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✅ Imagem salva no servidor!</span>`;
+        showToast(`Imagem "${file.name}" enviada com sucesso!`, "success");
+      } catch(uploadErr) {
+        console.warn('[Storage] Upload falhou, usando base64:', uploadErr.message);
+        const result = await processImageFile(file, 1000, 0.88);
+        imageUrl = result.dataUrl;
+        if (statusEl) statusEl.innerHTML = `<span class="text-amber-400 font-bold">⚠ Imagem local (${result.sizeKb} KB)</span>`;
+      }
+    } else {
+      const result = await processImageFile(file, 1000, 0.88);
+      imageUrl = result.dataUrl;
+      if (statusEl) statusEl.innerHTML = `<span class="text-amber-400 font-bold">✓ Imagem local pronta (${result.sizeKb} KB)</span>`;
+    }
     const imgPreview = document.getElementById('create-prod-preview');
-    if (imgPreview) imgPreview.src = result.dataUrl;
+    if (imgPreview) imgPreview.src = imageUrl;
     const inputImage = document.getElementById('create-prod-image');
-    if (inputImage) inputImage.value = result.dataUrl;
-    if (statusEl) statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Imagem HD pronta (${result.sizeKb} KB)</span>`;
-    showToast(`Imagem "${file.name}" carregada em alta definição!`, "success");
+    if (inputImage) inputImage.value = imageUrl;
   } catch (err) {
     if (statusEl) statusEl.innerHTML = '<span class="text-rose-400 font-bold">Falha no processamento</span>';
     showToast(err.message || "Erro ao processar imagem.", "error");
